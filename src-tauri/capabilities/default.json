@@ -36,6 +36,8 @@
     "screenrecord:allow-begin",
     "screenrecord:allow-adjust",
     "screenrecord:allow-stop",
-    "screenrecord:allow-show-answer"
+    "screenrecord:allow-show-answer",
+    "appupdate:allow-check-latest",
+    "appupdate:allow-download-and-install"
   ]
 }

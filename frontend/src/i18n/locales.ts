@@ -351,6 +351,9 @@ export interface LocaleMessages {
   otaStaged: string
   otaShellTooOld: string
   otaFailed: string
+  otaDownloadingApk?: string
+  otaInstallStarted?: string
+  otaInstallPermission?: string
   updateCheckBtn: string
   updateUpToDate: string
   mineSettings: string
@@ -812,6 +815,9 @@ export const zh: LocaleMessages = {
   otaStaged: 'v{version} 已下载，重启应用后生效',
   otaShellTooOld: 'v{version} 需要升级 APP 本体，请前往 Release 页下载安装',
   otaFailed: '检查更新失败',
+  otaDownloadingApk: '正在下载 v{version} 安装包… {progress}%',
+  otaInstallStarted: '下载完成，请在系统安装界面确认覆盖更新',
+  otaInstallPermission: '请允许“安装未知应用”，返回后再次点击检查更新',
   updateCheckBtn: '检查更新',
   updateUpToDate: '当前已是最新版本',
   mineSettings: '系统设置',
@@ -1273,6 +1279,9 @@ export const zhTW: LocaleMessages = {
   otaStaged: 'v{version} 已下載，重啟應用後生效',
   otaShellTooOld: 'v{version} 需要升級 APP 本體，請前往 Release 頁下載安裝',
   otaFailed: '檢查更新失敗',
+  otaDownloadingApk: '正在下載 v{version} 安裝檔… {progress}%',
+  otaInstallStarted: '下載完成，請在系統安裝畫面確認覆蓋更新',
+  otaInstallPermission: '請允許「安裝未知應用」，返回後再次點擊檢查更新',
   updateCheckBtn: '檢查更新',
   updateUpToDate: '目前已是最新版本',
   mineSettings: '系統設定',
@@ -1734,6 +1743,9 @@ export const en: LocaleMessages = {
   otaStaged: 'v{version} downloaded; takes effect after restarting',
   otaShellTooOld: 'v{version} requires a newer app build; please install from Releases',
   otaFailed: 'Update check failed',
+  otaDownloadingApk: 'Downloading v{version} installer… {progress}%',
+  otaInstallStarted: 'Download complete. Confirm the update in the system installer.',
+  otaInstallPermission: 'Allow installs from this app, then return and check again.',
   updateCheckBtn: 'Check for updates',
   updateUpToDate: 'You\\\\\\\\\\\\\\\'re on the latest version',
   mineSettings: 'System Settings',

@@ -5,6 +5,7 @@ members = [
     "packages/server",
     "src-tauri",
     "plugins/screenrecord",
+    "plugins/appupdate",
 ]
 
 [profile.release]

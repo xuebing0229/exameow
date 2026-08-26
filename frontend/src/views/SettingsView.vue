@@ -47,6 +47,42 @@ const otaBundle = ref('')
 const otaMessage = ref('')
 const otaBusy = ref(false)
 
+function isNewerVersion(latest: string, current: string): boolean {
+  const a = latest.split('.').map(Number)
+  const b = current.split('.').map(Number)
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const diff = (a[i] ?? 0) - (b[i] ?? 0)
+    if (diff !== 0) return diff > 0
+  }
+  return false
+}
+
+async function installLatestApk() {
+  const { invoke, Channel } = await import('@tauri-apps/api/core')
+  const latest = await invoke<{ version: string; url: string }>('plugin:appupdate|check_latest')
+  if (!isNewerVersion(latest.version, version)) {
+    otaMessage.value = i18n.t('otaUpToDate')
+    return
+  }
+
+  const events = new Channel<{ progress: number }>()
+  events.onmessage = ({ progress }) => {
+    otaMessage.value = i18n.t('otaDownloadingApk', { version: latest.version, progress })
+  }
+  otaMessage.value = i18n.t('otaDownloadingApk', { version: latest.version, progress: 0 })
+  try {
+    await invoke('plugin:appupdate|download_and_install', { url: latest.url, events })
+    otaMessage.value = i18n.t('otaInstallStarted')
+  } catch (e: any) {
+    const message = e?.message ?? String(e)
+    if (message.includes('install_permission_required')) {
+      otaMessage.value = i18n.t('otaInstallPermission')
+      return
+    }
+    throw e
+  }
+}
+
 // Desktop updater
 const showDesktopUpdate = isDesktopTauri()
 const updater = useDesktopUpdater()
@@ -69,15 +105,19 @@ async function handleOtaCheck() {
     const r = await tauriApi.otaDownload()
     if (r.status === 'staged' || r.status === 'alreadyStaged') {
       otaMessage.value = i18n.t('otaStaged', { version: r.version ?? '' })
-    } else if (r.status === 'shellTooOld') {
-      otaMessage.value = i18n.t('otaShellTooOld', { version: r.version ?? '' })
+    } else if (r.status === 'shellTooOld' || r.status === 'error') {
+      await installLatestApk()
     } else if (r.status === 'upToDate' || r.status === 'downloading') {
       otaMessage.value = i18n.t('otaUpToDate')
     } else {
       otaMessage.value = i18n.t('otaFailed') + (r.error ? `: ${r.error}` : '')
     }
   } catch (e: any) {
-    otaMessage.value = i18n.t('otaFailed') + ': ' + (e?.message ?? String(e))
+    try {
+      await installLatestApk()
+    } catch (fallbackError: any) {
+      otaMessage.value = i18n.t('otaFailed') + ': ' + (fallbackError?.message ?? String(fallbackError))
+    }
   } finally {
     otaBusy.value = false
   }
