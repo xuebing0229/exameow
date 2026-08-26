@@ -17,6 +17,7 @@ export interface MatchResult {
 
 export const useScreenRecordStore = defineStore('screenRecord', () => {
   const status = ref<'idle' | 'adjusting' | 'recording' | 'paused'>('idle')
+  const mode = ref<'continuous' | 'floating'>('continuous')
   const region = ref<ScreenRegion>({
     x: 100,
     y: 100,
@@ -35,7 +36,8 @@ export const useScreenRecordStore = defineStore('screenRecord', () => {
     return currentResult.value.question.answer
   })
 
-  function startRecording() {
+  function startRecording(nextMode: 'continuous' | 'floating' = 'continuous') {
+    mode.value = nextMode
     status.value = 'adjusting'
     currentResult.value = null
     ocrText.value = ''
@@ -75,6 +77,7 @@ export const useScreenRecordStore = defineStore('screenRecord', () => {
 
   return {
     status,
+    mode,
     region,
     currentResult,
     ocrText,

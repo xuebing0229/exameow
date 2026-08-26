@@ -39,6 +39,7 @@ class OverlayController(
     fun onBeginClicked()
     fun onAdjustClicked()
     fun onExitClicked()
+    fun onFloatBallClicked()
   }
 
   private val wm = activity.getSystemService(Activity.WINDOW_SERVICE) as WindowManager
@@ -49,6 +50,9 @@ class OverlayController(
   private var frameParams: WindowManager.LayoutParams? = null
   private var frameContainer: FrameLayout? = null
   private var frameVisible = true
+
+  private var ballParams: WindowManager.LayoutParams? = null
+  private var ballView: TextView? = null
 
   private var answerParams: WindowManager.LayoutParams? = null
   private var answerRoot: LinearLayout? = null
@@ -61,6 +65,7 @@ class OverlayController(
   private lateinit var beginCardButton: TextView
   private lateinit var adjustButton: ImageButton
   private var everBegan = false
+  private var floatingMode = false
   private var currentDark = false
   private var titleView: TextView? = null
   private var gripView: View? = null
@@ -128,11 +133,58 @@ class OverlayController(
     }
   }
 
+  fun showFloatingMode() {
+    floatingMode = true
+    mainHandler.post { showFloatBall() }
+  }
+
+  fun prepareFloatingCapture() {
+    floatingMode = true
+    everBegan = false
+    mainHandler.post {
+      hideFloatBall()
+      if (frameContainer == null) showFrameOverlay() else frameContainer?.visibility = View.VISIBLE
+      if (answerRoot == null) showAnswerOverlay() else answerRoot?.visibility = View.VISIBLE
+      titleView?.text = "悬浮窗搜题"
+      beginCardButton.text = "\u25B6 识别一次"
+      beginCardButton.visibility = View.VISIBLE
+      pausedChip.text = "调整截图框，框住题目区域"
+      pausedChip.visibility = View.VISIBLE
+      emptyLabel.visibility = View.GONE
+      answerLabel.visibility = View.GONE
+      stemLabel.visibility = View.GONE
+      optionsLabel.visibility = View.GONE
+      bankLabel.visibility = View.GONE
+    }
+  }
+
+  fun finishFloatingCapture() {
+    if (!floatingMode) return
+    mainHandler.post {
+      answerRoot?.visibility = View.VISIBLE
+      showFloatBall()
+    }
+  }
+
+  fun failFloatingCapture() {
+    if (!floatingMode) return
+    mainHandler.post {
+      emptyLabel.text = "截图失败，请重试"
+      emptyLabel.visibility = View.VISIBLE
+      answerRoot?.visibility = View.VISIBLE
+      showFloatBall()
+    }
+  }
+
   fun markBegan() {
     everBegan = true
     mainHandler.post {
       if (::beginCardButton.isInitialized) {
         beginCardButton.visibility = View.GONE
+      }
+      if (floatingMode && ::emptyLabel.isInitialized) {
+        emptyLabel.text = "识别中…"
+        emptyLabel.visibility = View.VISIBLE
       }
     }
   }
@@ -152,6 +204,10 @@ class OverlayController(
     mainHandler.post { frameContainer?.visibility = View.GONE }
   }
 
+  fun hideAnswer() {
+    mainHandler.post { answerRoot?.visibility = View.GONE }
+  }
+
   fun showFrame() {
     frameVisible = true
     mainHandler.post { frameContainer?.visibility = View.VISIBLE }
@@ -169,6 +225,85 @@ class OverlayController(
       }
       answerRoot = null
       answerParams = null
+      ballView?.let {
+        try { wm.removeView(it) } catch (_: Exception) {}
+      }
+      ballView = null
+      ballParams = null
+    }
+  }
+
+  // ==================== 悬浮球 ====================
+
+  private fun showFloatBall() {
+    ballView?.let {
+      it.visibility = View.VISIBLE
+      return
+    }
+
+    val size = dp(54f)
+    val p = overlayParams(size, size, screenW - size - dp(8f), (screenH * 0.38f).toInt())
+    ballParams = p
+    val ball = TextView(activity).apply {
+      text = "搜"
+      gravity = Gravity.CENTER
+      setTextColor(Color.WHITE)
+      textSize = 18f
+      typeface = android.graphics.Typeface.DEFAULT_BOLD
+      elevation = dp(10f).toFloat()
+      background = GradientDrawable().apply {
+        shape = GradientDrawable.OVAL
+        setColor(accent)
+        setStroke(dp(2f), 0x55FFFFFF)
+      }
+      setOnTouchListener(FloatBallTouchListener())
+    }
+    ballView = ball
+    wm.addView(ball, p)
+  }
+
+  private fun hideFloatBall() {
+    ballView?.visibility = View.GONE
+  }
+
+  private inner class FloatBallTouchListener : View.OnTouchListener {
+    private var startRawX = 0f
+    private var startRawY = 0f
+    private var startX = 0
+    private var startY = 0
+    private var moved = false
+
+    override fun onTouch(v: View, event: MotionEvent): Boolean {
+      val p = ballParams ?: return false
+      when (event.actionMasked) {
+        MotionEvent.ACTION_DOWN -> {
+          startRawX = event.rawX
+          startRawY = event.rawY
+          startX = p.x
+          startY = p.y
+          moved = false
+          return true
+        }
+        MotionEvent.ACTION_MOVE -> {
+          val dx = (event.rawX - startRawX).toInt()
+          val dy = (event.rawY - startRawY).toInt()
+          if (kotlin.math.abs(dx) > dp(5f) || kotlin.math.abs(dy) > dp(5f)) moved = true
+          p.x = (startX + dx).coerceIn(0, screenW - p.width)
+          p.y = (startY + dy).coerceIn(0, screenH - p.height)
+          ballView?.let { wm.updateViewLayout(it, p) }
+          return true
+        }
+        MotionEvent.ACTION_UP -> {
+          if (moved) {
+            p.x = if (p.x + p.width / 2 < screenW / 2) dp(8f) else screenW - p.width - dp(8f)
+            ballView?.let { wm.updateViewLayout(it, p) }
+          } else {
+            listener.onFloatBallClicked()
+          }
+          return true
+        }
+      }
+      return false
     }
   }
 
@@ -371,7 +506,7 @@ class OverlayController(
       gravity = Gravity.CENTER_VERTICAL
     }
     titleView = TextView(activity).apply {
-      text = "录屏搜题"
+      text = if (floatingMode) "悬浮窗搜题" else "录屏搜题"
       setTextColor(textPrimary)
       textSize = 10f
       typeface = android.graphics.Typeface.DEFAULT_BOLD
@@ -382,7 +517,7 @@ class OverlayController(
     root.addView(header)
 
     beginCardButton = TextView(activity).apply {
-      text = "\u25B6 开始录制"
+      text = if (floatingMode) "\u25B6 识别一次" else "\u25B6 开始录制"
       setTextColor(Color.WHITE)
       textSize = 11f
       typeface = android.graphics.Typeface.DEFAULT_BOLD
@@ -583,7 +718,13 @@ class OverlayController(
       if (answerRoot == null) return@post
       if (paused || !everBegan) {
         beginCardButton.visibility = View.VISIBLE
-        beginCardButton.text = if (everBegan) "\u25B6 继续录制" else "\u25B6 开始录制"
+        beginCardButton.text = if (floatingMode) {
+          "\u25B6 识别一次"
+        } else if (everBegan) {
+          "\u25B6 继续录制"
+        } else {
+          "\u25B6 开始录制"
+        }
         pausedChip.visibility = if (paused) View.VISIBLE else View.GONE
         emptyLabel.visibility = View.GONE
         answerLabel.visibility = View.GONE
@@ -596,6 +737,7 @@ class OverlayController(
       pausedChip.visibility = View.GONE
       if (!found) {
         emptyLabel.visibility = View.VISIBLE
+        emptyLabel.text = "未匹配到题目"
         answerLabel.visibility = View.GONE
         stemLabel.visibility = View.GONE
         optionsLabel.visibility = View.GONE

@@ -59,6 +59,27 @@ class ScreenRecordService : Service() {
     }
   }
 
+  private var singleShotAttempts = 0
+  private val singleShotCapture = object : Runnable {
+    override fun run() {
+      val captured = try {
+        grabFrame()
+      } catch (e: Exception) {
+        Log.e("ScreenRecord", "single capture failed", e)
+        false
+      }
+      if (captured) {
+        return
+      }
+      if (singleShotAttempts >= 10) {
+        ScreenRecordRuntime.overlay?.failFloatingCapture()
+        return
+      }
+      singleShotAttempts += 1
+      handler.postDelayed(this, 150L)
+    }
+  }
+
   override fun onBind(intent: Intent?): IBinder? = null
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -150,9 +171,16 @@ class ScreenRecordService : Service() {
     handler.removeCallbacks(captureLoop)
   }
 
-  private fun grabFrame() {
-    val reader = imageReader ?: return
-    val image = reader.acquireLatestImage() ?: return
+  fun captureOnce() {
+    stopCapture()
+    handler.removeCallbacks(singleShotCapture)
+    singleShotAttempts = 0
+    handler.postDelayed(singleShotCapture, 180L)
+  }
+
+  private fun grabFrame(): Boolean {
+    val reader = imageReader ?: return false
+    val image = reader.acquireLatestImage() ?: return false
     try {
       val plane = image.planes[0]
       val buffer = plane.buffer
@@ -200,6 +228,7 @@ class ScreenRecordService : Service() {
       val b64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
 
       ScreenRecordRuntime.send("frame") { put("data", b64) }
+      return true
     } finally {
       image.close()
     }
@@ -207,6 +236,7 @@ class ScreenRecordService : Service() {
 
   private fun tearDown() {
     stopCapture()
+    handler.removeCallbacks(singleShotCapture)
     virtualDisplay?.release()
     virtualDisplay = null
     imageReader?.close()

@@ -254,6 +254,13 @@ export interface LocaleMessages {
   searchModeCameraLiveDesc: string
   searchModeScreenRecord: string
   searchModeScreenRecordDesc: string
+  searchModeFloating?: string
+  searchModeFloatingDesc?: string
+  searchFloatingStart?: string
+  searchFloatingStop?: string
+  searchFloatingDesc?: string
+  searchFloatingEnabled?: string
+  searchFloatingNotSupported?: string
   searchScreenRecordStart: string
   searchScreenRecordStop: string
   searchScreenRecordNotSupported: string
@@ -705,6 +712,13 @@ export const zh: LocaleMessages = {
   searchModeCameraLiveDesc: 'AI 实时监听摄像头中的题目',
   searchModeScreenRecord: '录屏搜题',
   searchModeScreenRecordDesc: 'AI 实时监听桌面上的题目',
+  searchModeFloating: '悬浮窗搜题',
+  searchModeFloatingDesc: '悬浮球单次框选截图，搜索本地题库',
+  searchFloatingStart: '开启悬浮球',
+  searchFloatingStop: '关闭悬浮球',
+  searchFloatingDesc: '开启后切换到其他 App，点击屏幕边缘的「搜」悬浮球，框住题目并识别一次',
+  searchFloatingEnabled: '悬浮球已开启，可以切换到其他 App 使用',
+  searchFloatingNotSupported: '悬浮窗搜题目前仅支持 Android App',
   searchScreenRecordStart: '开始录制',
   searchScreenRecordStop: '停止录制',
   searchScreenRecordNotSupported: '录屏搜题支持桌面端（Windows / macOS / Linux）和 Android；iOS 因系统限制暂不支持',
@@ -1156,6 +1170,13 @@ export const zhTW: LocaleMessages = {
   searchModeCameraLiveDesc: 'AI 實時监听摄像头中的題目',
   searchModeScreenRecord: '录屏搜題',
   searchModeScreenRecordDesc: 'AI 實時监听桌面上的題目',
+  searchModeFloating: '懸浮窗搜題',
+  searchModeFloatingDesc: '懸浮球單次框選截圖，搜尋本地題庫',
+  searchFloatingStart: '開啟懸浮球',
+  searchFloatingStop: '關閉懸浮球',
+  searchFloatingDesc: '開啟後切換到其他 App，點擊螢幕邊緣的「搜」懸浮球，框住題目並識別一次',
+  searchFloatingEnabled: '懸浮球已開啟，可以切換到其他 App 使用',
+  searchFloatingNotSupported: '懸浮窗搜題目前僅支援 Android App',
   searchScreenRecordStart: '开始录制',
   searchScreenRecordStop: '停止录制',
   searchScreenRecordNotSupported: '录屏搜題支持桌面端（Windows / macOS / Linux）和 Android；iOS 因系統限制暂不支持',
@@ -1607,6 +1628,13 @@ export const en: LocaleMessages = {
   searchModeCameraLiveDesc: 'AI watches questions through your camera in real time',
   searchModeScreenRecord: 'Live Screen Search',
   searchModeScreenRecordDesc: 'AI watches your desktop screen in real time',
+  searchModeFloating: 'Floating Search',
+  searchModeFloatingDesc: 'Tap a floating button to capture and search one question',
+  searchFloatingStart: 'Enable Floating Button',
+  searchFloatingStop: 'Disable Floating Button',
+  searchFloatingDesc: 'Switch to another app, tap the floating Search button, frame the question, and recognize it once',
+  searchFloatingEnabled: 'Floating search is active. You can switch to another app',
+  searchFloatingNotSupported: 'Floating search is currently available only in the Android app',
   searchScreenRecordStart: 'Start Recording',
   searchScreenRecordStop: 'Stop Recording',
   searchScreenRecordNotSupported: 'Screen recording search is available on desktop (Windows / macOS / Linux) and Android; not supported on iOS due to system restrictions',

@@ -231,12 +231,15 @@ export function useScreenRecord() {
     } catch { /* overlay gone */ }
   }
 
-  async function startMobile() {
+  async function startMobile(floating = false) {
     const { invoke, Channel } = await import('@tauri-apps/api/core')
 
-    preloadOcr().catch((e) => {
+    const ocrReady = preloadOcr().catch((e) => {
       store.ocrError = e instanceof Error ? e.message : String(e)
+      throw e
     })
+    if (floating) await ocrReady
+    else void ocrReady.catch(() => {})
 
     const chan = new Channel<Record<string, unknown>>()
     chan.onmessage = (msg) => {
@@ -260,7 +263,10 @@ export function useScreenRecord() {
       }
     }
 
-    await invoke('plugin:screenrecord|start_session', { events: chan })
+    await invoke(
+      floating ? 'plugin:screenrecord|start_float_session' : 'plugin:screenrecord|start_session',
+      { events: chan },
+    )
     await pushAnswerToOverlay()
   }
 
@@ -281,6 +287,11 @@ export function useScreenRecord() {
     }
 
     await api.createRecordWindows()
+  }
+
+  async function startFloating() {
+    if (!isAndroid()) throw new Error('floating_search_android_only')
+    await startMobile(true)
   }
 
   // ===== Answer-float window side (capture loop lives here: this window is
@@ -322,10 +333,17 @@ export function useScreenRecord() {
     store.stopRecording()
     for (const fn of floatUnlistenFns) fn()
     floatUnlistenFns = []
+    if (isAndroid()) {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core')
+        await invoke('plugin:screenrecord|stop')
+      } catch { /* ignore */ }
+      return
+    }
     try {
       await api.closeRecordWindows()
     } catch { /* ignore */ }
   }
 
-  return { start, initFloat, adjust, stop }
+  return { start, startFloating, initFloat, adjust, stop }
 }

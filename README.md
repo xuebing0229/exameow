@@ -91,12 +91,13 @@ Compose exams from multiple local question banks with configurable per-type ques
 
 ### 🔍 Search Modes — Find Answers Fast
 
-Search local question banks by typing or pasting a question — optional AI answering provides explanations. **Photo search** uses on-device OCR to recognize questions from your camera or uploaded images (processing happens locally in your browser, nothing uploaded). **Camera live search** points your camera at a screen or paper and AI watches for matching questions in real time. **Screen record search** lets you draw a capture frame over any window — AI monitors it and shows answers in a floating overlay (Windows/macOS/Linux/Android; unavailable on iOS due to system restrictions).
+Search local question banks by typing or pasting a question — optional AI answering provides explanations. **Photo search** uses on-device OCR to recognize questions from your camera or uploaded images (processing happens locally in your browser, nothing uploaded). **Camera live search** points your camera at a screen or paper and AI watches for matching questions in real time. On Android, **floating search** keeps a draggable Search button over other apps: tap it, frame one question, capture once, and view the local-bank match in a floating answer card. **Screen record search** remains available for continuous recognition (Windows/macOS/Linux/Android; unavailable on iOS due to system restrictions).
 
 - **Text Search** — Type or paste a question to find matches in your local banks, with optional AI answering
 - **Photo Search** — Snap or upload a photo of a question; on-device OCR (runs locally in your browser, no upload)
 - **Camera Live Search** — Point your camera at the screen/paper; AI watches and matches questions in real time
-- **Screen Record Search** — Draw a capture frame over any window; AI monitors it and matches questions live, with a floating answer overlay (Windows / macOS / Linux / Android; not available on iOS due to system restrictions)
+- **Floating Search (Android)** — Keep a draggable Search button over other apps; tap, frame, and capture one question at a time with answers shown in a floating card
+- **Screen Record Search** — Draw a capture frame over any window; AI continuously monitors it and matches questions live, with a floating answer overlay (Windows / macOS / Linux / Android; not available on iOS due to system restrictions)
 
 ### 🌐 Cross-Platform & Privacy — Your Data, Your Device
 

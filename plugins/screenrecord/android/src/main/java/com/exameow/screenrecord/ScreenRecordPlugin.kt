@@ -59,10 +59,24 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
   @Volatile
   private var adjusting = true
 
+  @Volatile
+  private var floatingMode = false
+
   override fun load(webView: android.webkit.WebView) {}
 
   @Command
   fun startSession(invoke: Invoke) {
+    floatingMode = false
+    startSessionCommon(invoke)
+  }
+
+  @Command
+  fun startFloatSession(invoke: Invoke) {
+    floatingMode = true
+    startSessionCommon(invoke)
+  }
+
+  private fun startSessionCommon(invoke: Invoke) {
     val args = invoke.parseArgs(StartSessionArgs::class.java)
     ScreenRecordRuntime.events = args.events
 
@@ -115,8 +129,13 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
 
     val overlay = OverlayController(activity, this)
     ScreenRecordRuntime.overlay = overlay
-    overlay.showInitial()
-    overlay.setAdjusting(true)
+    if (floatingMode) {
+      overlay.showFloatingMode()
+      ScreenRecordRuntime.send("ready")
+    } else {
+      overlay.showInitial()
+      overlay.setAdjusting(true)
+    }
     Log.i("ScreenRecord", "overlays shown")
 
     invoke.resolve()
@@ -127,16 +146,25 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
     adjusting = false
     ScreenRecordRuntime.overlay?.setAdjusting(false)
     ScreenRecordRuntime.overlay?.hideFrame()
-    ScreenRecordRuntime.service?.startCapture()
+    if (floatingMode) {
+      ScreenRecordRuntime.overlay?.hideAnswer()
+      ScreenRecordRuntime.service?.captureOnce()
+    } else {
+      ScreenRecordRuntime.service?.startCapture()
+    }
     invoke.resolve()
   }
 
   @Command
   fun adjust(invoke: Invoke) {
     adjusting = true
-    ScreenRecordRuntime.overlay?.setAdjusting(true)
     ScreenRecordRuntime.service?.stopCapture()
-    ScreenRecordRuntime.overlay?.showFrame()
+    if (floatingMode) {
+      ScreenRecordRuntime.overlay?.prepareFloatingCapture()
+    } else {
+      ScreenRecordRuntime.overlay?.setAdjusting(true)
+      ScreenRecordRuntime.overlay?.showFrame()
+    }
     invoke.resolve()
   }
 
@@ -159,6 +187,7 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
         options = args.options,
         bankName = args.bankName,
       )
+      if (floatingMode && !args.paused) overlay.finishFloatingCapture()
     }
     invoke.resolve()
   }
@@ -170,11 +199,24 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
     overlay?.markBegan()
     overlay?.setAdjusting(false)
     overlay?.hideFrame()
-    ScreenRecordRuntime.service?.startCapture()
+    if (floatingMode) {
+      overlay?.hideAnswer()
+      ScreenRecordRuntime.service?.captureOnce()
+    } else {
+      ScreenRecordRuntime.service?.startCapture()
+    }
     ScreenRecordRuntime.send("begin")
   }
 
   override fun onAdjustClicked() {
+    if (floatingMode) {
+      adjusting = true
+      ScreenRecordRuntime.service?.stopCapture()
+      ScreenRecordRuntime.overlay?.prepareFloatingCapture()
+      ScreenRecordRuntime.send("adjust")
+      return
+    }
+
     adjusting = !adjusting
     Log.i("ScreenRecord", "onAdjustClicked, adjusting=$adjusting")
     val overlay = ScreenRecordRuntime.overlay
@@ -193,6 +235,13 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
   override fun onExitClicked() {
     teardown()
     ScreenRecordRuntime.send("exit")
+  }
+
+  override fun onFloatBallClicked() {
+    if (!floatingMode) return
+    adjusting = true
+    ScreenRecordRuntime.overlay?.prepareFloatingCapture()
+    ScreenRecordRuntime.send("adjust")
   }
 
   private fun teardown() {

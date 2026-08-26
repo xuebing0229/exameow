@@ -7,6 +7,7 @@ import {
   CameraIcon,
   VideoCameraIcon,
   ComputerDesktopIcon,
+  CursorArrowRaysIcon,
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -17,7 +18,8 @@ const isTauriMobile = isTauri() && isMobileDevice()
 const modes = [
   { key: 'text', titleKey: 'searchModeText', descKey: 'searchModeTextDesc', icon: DocumentTextIcon, available: true, supported: true, path: '/search/text' },
   { key: 'photo', titleKey: 'searchModePhoto', descKey: 'searchModePhotoDesc', icon: CameraIcon, available: true, supported: true, path: '/search/photo' },
-  { key: 'screenRecord', titleKey: 'searchModeScreenRecord', descKey: 'searchModeScreenRecordDesc', icon: ComputerDesktopIcon, available: true, supported: isDesktopTauri() || isAndroid(), path: '/search/screen-record' },
+  { key: 'floating', titleKey: 'searchModeFloating', descKey: 'searchModeFloatingDesc', icon: CursorArrowRaysIcon, available: true, supported: isTauri() && isAndroid(), path: '/search/floating' },
+  { key: 'screenRecord', titleKey: 'searchModeScreenRecord', descKey: 'searchModeScreenRecordDesc', icon: ComputerDesktopIcon, available: true, supported: isDesktopTauri() || (isTauri() && isAndroid()), path: '/search/screen-record' },
   { key: 'cameraLive', titleKey: 'searchModeCameraLive', descKey: 'searchModeCameraLiveDesc', icon: VideoCameraIcon, available: true, supported: isTauriMobile, path: '/search/camera-live' },
 ] as const
 

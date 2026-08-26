@@ -32,6 +32,7 @@
     "opener:allow-open-path",
     "sharekit:default",
     "screenrecord:allow-start-session",
+    "screenrecord:allow-start-float-session",
     "screenrecord:allow-begin",
     "screenrecord:allow-adjust",
     "screenrecord:allow-stop",

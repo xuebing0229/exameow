@@ -1,4 +1,11 @@
-const COMMANDS: &[&str] = &["start_session", "begin", "adjust", "stop", "show_answer"];
+const COMMANDS: &[&str] = &[
+    "start_session",
+    "start_float_session",
+    "begin",
+    "adjust",
+    "stop",
+    "show_answer",
+];
 
 fn main() {
     tauri_plugin::Builder::new(COMMANDS)

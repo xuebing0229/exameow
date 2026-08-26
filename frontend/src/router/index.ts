@@ -44,6 +44,12 @@ const router = createRouter({
       meta: { title: 'Screen Record Search' },
     },
     {
+      path: '/search/floating',
+      name: 'search-floating',
+      component: () => import('@/views/FloatingSearchView.vue'),
+      meta: { title: 'Floating Search' },
+    },
+    {
       path: '/search/camera-live',
       name: 'search-camera-live',
       component: () => import('@/views/CameraLiveView.vue'),
