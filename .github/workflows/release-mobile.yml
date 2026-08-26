@@ -11,6 +11,7 @@ env:
   NODE_VERSION: '22'
   JAVA_VERSION: '17'
   ANDROID_NDK_VERSION: '27.0.12077973'
+  ANDROID_CERT_SHA256: '1082324f3b0aaa03be0c8b6c3a9ab31c28bc47527cd4405c4b28bae64817474a'
 
 jobs:
   build-android:
@@ -66,6 +67,17 @@ jobs:
 
       - name: Decode release keystore
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+
+      - name: Verify fixed Android signing certificate
+        run: |
+          ACTUAL_SHA256=$(keytool -list -v \
+            -keystore release.keystore \
+            -storepass "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            -alias exameow \
+            | sed -n 's/.*SHA256: //p' \
+            | tr -d ':' \
+            | tr '[:upper:]' '[:lower:]')
+          test "$ACTUAL_SHA256" = "$ANDROID_CERT_SHA256"
 
       - name: Sign and align APK
         run: |

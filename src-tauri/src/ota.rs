@@ -6,7 +6,7 @@ use tauri::utils::assets::{AssetKey, CspHash};
 use tauri::{App, Assets, Manager, Runtime};
 
 const MANIFEST_URL: &str =
-    "https://github.com/heshengtao/exameow/releases/latest/download/mobile-ota.json";
+    "https://github.com/xuebing0229/exameow/releases/latest/download/mobile-ota.json";
 const MAX_DOWNLOAD_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_EXTRACT_BYTES: u64 = 256 * 1024 * 1024;
 
