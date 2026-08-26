@@ -7,7 +7,8 @@ use axum::{
 use exameow_core::ai::{AIClient, ModelInfo};
 use exameow_core::config::{AIConfigData, ConfigStore};
 use exameow_core::exam::{
-    answer_question, explain_question, generate_exam, judge_answer, AnswerResult, ExamParams, ExplainResult, JudgeResult, Question,
+    answer_question, explain_question, generate_exam, judge_answer, refactor_text_import,
+    AnswerResult, ExamParams, ExplainResult, JudgeResult, Question, TextImportRefactorResult,
 };
 use exameow_core::parser::parse_file;
 use serde::{Deserialize, Serialize};
@@ -359,6 +360,48 @@ pub async fn explain_handler(
         &req.reference_answer,
         &analysis,
         &language,
+        &model,
+    )
+    .await
+    .map_err(|e| (StatusCode::BAD_GATEWAY, format!("AI error: {e}")))?;
+    Ok(Json(result))
+}
+
+#[derive(Deserialize)]
+pub struct TextImportRefactorRequest {
+    pub raw_text: String,
+    #[serde(default)]
+    pub current_questions: Vec<Question>,
+    #[serde(default)]
+    pub warnings: Vec<String>,
+    pub endpoint: Option<String>,
+    pub api_key: Option<String>,
+    pub model: Option<String>,
+}
+
+pub async fn text_import_refactor_handler(
+    Json(req): Json<TextImportRefactorRequest>,
+) -> Result<Json<TextImportRefactorResult>, (StatusCode, String)> {
+    if req.raw_text.trim().is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "Raw text is empty".to_string()));
+    }
+    if req.raw_text.chars().count() > 60_000 {
+        return Err((StatusCode::BAD_REQUEST, "Raw text exceeds 60000 characters".to_string()));
+    }
+
+    let endpoint = req.endpoint.filter(|s| !s.is_empty()).unwrap_or_else(ai_endpoint);
+    let api_key = req.api_key.filter(|s| !s.is_empty()).unwrap_or_else(ai_api_key);
+    let model = req.model.filter(|s| !s.is_empty()).unwrap_or_else(ai_model);
+    if endpoint.is_empty() || api_key.is_empty() || model.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "No AI config (set AI_ENDPOINT/AI_API_KEY/AI_MODEL env vars)".to_string()));
+    }
+
+    let client = AIClient::new(&endpoint, &api_key);
+    let result = refactor_text_import(
+        &client,
+        &req.raw_text,
+        &req.current_questions,
+        &req.warnings,
         &model,
     )
     .await

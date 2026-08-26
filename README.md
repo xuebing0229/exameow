@@ -66,7 +66,7 @@ Exameow parses study materials in **10+ file formats** — PDF, DOCX, XLSX, PPTX
 
 ### 📚 Practice Modes — Study Smarter, Not Harder
 
-Turn generated questions into interactive study sessions. Practice sequentially, shuffle questions and options randomly, or take a timed mock exam with auto-generated papers. Wrong questions are automatically tracked and reviewed — answer a question correctly several times in a row and it clears from the wrong-question list. Flip between exam mode (answer blind) and flashcard mode (answers visible). Short-answer questions are graded by AI against reference answers, with manual regrading supported. Import and export question banks via XLSX/CSV with smart column mapping.
+Turn generated questions into interactive study sessions. Practice sequentially, shuffle questions and options randomly, or take a timed mock exam with auto-generated papers. Wrong questions are automatically tracked and reviewed — answer a question correctly several times in a row and it clears from the wrong-question list. Flip between exam mode (answer blind) and flashcard mode (answers visible). Short-answer questions are graded by AI against reference answers, with manual regrading supported. Import question banks from XLSX/CSV, TXT files, or pasted text, then preview and correct recognized questions before saving.
 
 - **Sequential Practice** — Go through a question bank in order
 - **Random Practice** — Questions and options shuffled for better retention
@@ -74,7 +74,7 @@ Turn generated questions into interactive study sessions. Practice sequentially,
 - **Wrong-Question Review** — Track mistakes, practice only what you got wrong, and watch them clear as you improve
 - **Exam / Flashcard Modes** — Answer blind, or flip through questions with answers visible
 - **AI Grading** — Short-answer questions graded by AI against reference answers, with feedback; manual regrading supported
-- **Question Bank Management** — Import banks from XLSX/CSV with smart column mapping; export anytime
+- **Question Bank Management** — Import XLSX/CSV with smart column mapping, or recognize TXT/pasted text locally with an editable preview and optional AI format cleanup; export anytime
 
 ### 📝 Online Exams — Publish and Invite Students
 

@@ -6,6 +6,7 @@ import { handlePublish, handleGetExam, handleSubmit, handleResults, handleDelete
 import { answerQuestion } from './answer'
 import { judgeAnswer } from './judge'
 import { explainQuestion } from './explain'
+import { refactorTextImport } from './textImport'
 import { parseFile } from './parser'
 import { generateXlsxBuffer, generateCsvContent } from './export'
 import { Question, ExamParams, AVAILABLE_CF_MODELS } from './types'
@@ -249,6 +250,37 @@ app.post('/api/explain', async (c) => {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('AI explain error:', msg)
     return c.json({ error: `AI explain error: ${msg}` }, 502)
+  }
+})
+
+app.post('/api/import/refactor', async (c) => {
+  let body: {
+    raw_text?: string
+    current_questions?: Question[]
+    warnings?: string[]
+    model?: string
+  }
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json({ error: 'Invalid JSON body' }, 400)
+  }
+  const rawText = (body.raw_text || '').trim()
+  if (!rawText) return c.json({ error: 'Raw text is empty' }, 400)
+  if ([...rawText].length > 60_000) return c.json({ error: 'Raw text exceeds 60000 characters' }, 400)
+  try {
+    const result = await refactorTextImport(
+      c.env.AI,
+      rawText,
+      body.current_questions || [],
+      body.warnings || [],
+      body.model || undefined,
+    )
+    return c.json(result)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('AI text import refactor error:', msg)
+    return c.json({ error: `AI text import refactor error: ${msg}` }, 502)
   }
 })
 

@@ -818,7 +818,7 @@ function handleBack() {
     <!-- Import Dialog -->
     <Transition name="scale">
       <div v-if="showImportDialog" class="scrim flex items-center justify-center p-4" @click.self="showImportDialog = false">
-        <div class="card-elevated w-full max-w-lg max-h-[80vh] overflow-y-auto p-5">
+        <div class="card-elevated w-full max-w-4xl max-h-[88vh] overflow-y-auto p-5">
           <ImportDialog @close="showImportDialog = false" @imported="handleImportDone" />
         </div>
       </div>

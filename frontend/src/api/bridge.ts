@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-import type { AIConfig, AnswerResult, ExamParams, ExplainParams, ExplainResult, JudgeParams, JudgeResult, ModelInfo, Question } from '@exameow/shared'
+import type { AIConfig, AnswerResult, ExamParams, ExplainParams, ExplainResult, JudgeParams, JudgeResult, ModelInfo, Question, TextImportRefactorParams, TextImportRefactorResult } from '@exameow/shared'
 
 export interface GenerateResult {
   questions: Question[]
@@ -138,6 +138,22 @@ export const tauriApi = {
       referenceAnswer: params.reference_answer,
       analysis: params.analysis ?? '',
       language,
+      endpoint,
+      apiKey,
+      model,
+    })
+  },
+
+  async refactorTextImport(
+    params: TextImportRefactorParams,
+    endpoint: string,
+    apiKey: string,
+    model: string,
+  ): Promise<TextImportRefactorResult> {
+    return invoke<TextImportRefactorResult>('refactor_text_import', {
+      rawText: params.raw_text,
+      currentQuestions: params.current_questions,
+      warnings: params.warnings,
       endpoint,
       apiKey,
       model,

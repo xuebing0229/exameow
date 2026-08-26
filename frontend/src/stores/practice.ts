@@ -387,6 +387,20 @@ export const usePracticeStore = defineStore('practice', () => {
     }
   }
 
+  function importQuestionList(questions: Question[], fileName: string): string {
+    if (questions.length === 0) return ''
+    const nameBase = fileName.replace(/\.[^/.]+$/, '').trim()
+    const bank: QuestionBank = {
+      id: generateId(),
+      name: nameBase || `Imported bank ${new Date().toLocaleDateString()}`,
+      questions: questions.map(question => ({ ...question, options: [...question.options] })),
+      createdAt: Date.now(),
+      source: 'text-import',
+    }
+    addBank(bank)
+    return bank.id
+  }
+
   function applyImportMapping(mapping: ColumnMapping): number {
     if (!importAnalysis.value) return 0
     const questions = parseWithMapping(importAnalysis.value, mapping, importSource.value)
@@ -454,6 +468,7 @@ export const usePracticeStore = defineStore('practice', () => {
     formatTime,
     importCSV,
     importExcelFile,
+    importQuestionList,
     applyImportMapping,
     importAnalysis,
     confirmImport,

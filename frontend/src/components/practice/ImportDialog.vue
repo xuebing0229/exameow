@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { useI18nStore } from '@/stores/i18n'
 import { usePracticeStore } from '@/stores/practice'
 import ColumnMapper from '@/components/practice/ColumnMapper.vue'
+import TextImportPanel from '@/components/practice/TextImportPanel.vue'
 import type { ColumnMapping } from '@/utils/importParser'
 import {
   XMarkIcon,
@@ -21,6 +22,7 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const selectedFile = ref<File | null>(null)
 const parsing = ref(false)
 const parseError = ref('')
+const mode = ref<'table' | 'text'>('table')
 
 const previewHeaders = computed(() => {
   const qs = practiceStore.importPreview
@@ -106,6 +108,10 @@ function handleConfirm() {
   emit('imported', count)
 }
 
+function handleTextImported(count: number) {
+  emit('imported', count)
+}
+
 </script>
 
 <template>
@@ -119,13 +125,31 @@ function handleConfirm() {
       </button>
     </div>
 
-    <input
+    <div class="grid grid-cols-2 gap-2 p-1 rounded-2xl" style="background: rgb(var(--md-surface-container))">
+      <button
+        class="px-3 py-2 rounded-xl text-sm font-medium transition-colors"
+        :style="mode === 'table' ? { background: 'rgb(var(--md-primary))', color: 'rgb(var(--md-on-primary))' } : { color: 'rgb(var(--md-on-surface-variant))' }"
+        @click="mode = 'table'"
+      >
+        Excel / CSV
+      </button>
+      <button
+        class="px-3 py-2 rounded-xl text-sm font-medium transition-colors"
+        :style="mode === 'text' ? { background: 'rgb(var(--md-primary))', color: 'rgb(var(--md-on-primary))' } : { color: 'rgb(var(--md-on-surface-variant))' }"
+        @click="mode = 'text'"
+      >
+        TXT / 粘贴
+      </button>
+    </div>
+
+    <template v-if="mode === 'table'">
+      <input
       ref="fileInput"
       type="file"
       accept=".csv,.xlsx,.xls"
       class="hidden"
       @change="handleFileSelect"
-    />
+      />
 
     <div
       v-if="!selectedFile"
@@ -166,7 +190,7 @@ function handleConfirm() {
       {{ i18n.t('practiceImportFail') }}
     </div>
 
-    <template v-if="practiceStore.importPreview && practiceStore.importPreview.length > 0 && !parsing">
+      <template v-if="practiceStore.importPreview && practiceStore.importPreview.length > 0 && !parsing">
       <div class="flex items-center justify-between">
         <span class="text-title-sm" :style="{ color: 'rgb(var(--md-on-surface))' }">
            {{ i18n.t('practiceImportCount', { n: practiceStore.importPreview.length }) }}
@@ -212,6 +236,9 @@ function handleConfirm() {
       <button class="btn-filled w-full" @click="handleConfirm">
         {{ i18n.t('practiceImportConfirm') }}
       </button>
+      </template>
     </template>
+
+    <TextImportPanel v-else @imported="handleTextImported" />
   </div>
 </template>

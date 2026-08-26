@@ -73,6 +73,11 @@ export interface ExplainResult {
   explanation: string
 }
 
+export interface TextImportRefactorResult {
+  cleaned_text: string
+  notes: string[]
+}
+
 export const DEFAULT_MODEL = '@cf/openai/gpt-oss-120b'
 
 export interface PublicQuestion {

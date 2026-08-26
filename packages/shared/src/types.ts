@@ -28,7 +28,7 @@ export interface QuestionBank {
   name: string
   questions: Question[]
   createdAt: number
-  source: 'ai-generated' | 'csv-import' | 'xlsx-import'
+  source: 'ai-generated' | 'csv-import' | 'xlsx-import' | 'text-import'
 }
 
 export type PracticeMode = 'sequential' | 'random' | 'mock' | 'wrong'
@@ -105,6 +105,17 @@ export interface ExplainParams {
 
 export interface ExplainResult {
   explanation: string
+}
+
+export interface TextImportRefactorParams {
+  raw_text: string
+  current_questions: Question[]
+  warnings: string[]
+}
+
+export interface TextImportRefactorResult {
+  cleaned_text: string
+  notes: string[]
 }
 
 export interface PublicQuestion {

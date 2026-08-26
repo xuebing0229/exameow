@@ -1,4 +1,4 @@
-import type { AIConfig, AnswerResult, ExamParams, ExplainParams, ExplainResult, JudgeParams, JudgeResult, ModelInfo, Question } from '@exameow/shared'
+import type { AIConfig, AnswerResult, ExamParams, ExplainParams, ExplainResult, JudgeParams, JudgeResult, ModelInfo, Question, TextImportRefactorParams, TextImportRefactorResult } from '@exameow/shared'
 
 const BASE_URL = import.meta.env.VITE_API_URL || ''
 
@@ -134,6 +134,21 @@ export const httpApi = {
         api_key: config.api_key,
         model: config.model,
       }),
+      signal,
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`)
+    return res.json()
+  },
+
+  async refactorTextImport(
+    params: TextImportRefactorParams,
+    config: AIConfig,
+    signal?: AbortSignal,
+  ): Promise<TextImportRefactorResult> {
+    const res = await fetch(`${BASE_URL}/api/import/refactor`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...params, endpoint: config.endpoint, api_key: config.api_key, model: config.model }),
       signal,
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`)

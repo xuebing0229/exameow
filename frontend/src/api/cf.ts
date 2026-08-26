@@ -1,4 +1,4 @@
-import type { AIConfig, AnswerResult, ExamParams, ExplainParams, ExplainResult, JudgeParams, JudgeResult, ModelInfo, Question } from '@exameow/shared'
+import type { AIConfig, AnswerResult, ExamParams, ExplainParams, ExplainResult, JudgeParams, JudgeResult, ModelInfo, Question, TextImportRefactorParams, TextImportRefactorResult } from '@exameow/shared'
 import { AVAILABLE_CF_MODELS } from './cf-models'
 
 export interface GenerateResult {
@@ -132,6 +132,21 @@ export const cfApi = {
         language,
         model: config.model,
       }),
+      signal,
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`)
+    return res.json()
+  },
+
+  async refactorTextImport(
+    params: TextImportRefactorParams,
+    config: AIConfig,
+    signal?: AbortSignal,
+  ): Promise<TextImportRefactorResult> {
+    const res = await fetch(`${getBaseUrl()}/api/import/refactor`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...params, model: config.model }),
       signal,
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`)

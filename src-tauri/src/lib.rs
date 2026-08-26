@@ -3,7 +3,8 @@ use exameow_core::config::{AIConfigData, ConfigStore};
 use exameow_core::exam::{
     answer_question as core_answer_question, explain_question as core_explain_question,
     generate_exam as core_generate_exam,
-    judge_answer as core_judge_answer, AnswerResult, ExamParams, ExplainResult, JudgeResult, Question,
+    judge_answer as core_judge_answer, refactor_text_import as core_refactor_text_import,
+    AnswerResult, ExamParams, ExplainResult, JudgeResult, Question, TextImportRefactorResult,
 };
 use exameow_core::export::export_csv as core_export_csv;
 use exameow_core::export::export_xlsx as core_export_xlsx;
@@ -159,6 +160,27 @@ async fn explain_question(
     core_explain_question(&client, &stem, &reference_answer, &analysis, &language, &model)
         .await
         .map_err(|e| CommandError(format!("Explain error: {e}")))
+}
+
+#[tauri::command]
+async fn refactor_text_import(
+    raw_text: String,
+    current_questions: Vec<Question>,
+    warnings: Vec<String>,
+    endpoint: String,
+    api_key: String,
+    model: String,
+) -> Result<TextImportRefactorResult, CommandError> {
+    if raw_text.trim().is_empty() {
+        return Err(CommandError("Raw text is empty".to_string()));
+    }
+    if raw_text.chars().count() > 60_000 {
+        return Err(CommandError("Raw text exceeds 60000 characters".to_string()));
+    }
+    let client = AIClient::new(&endpoint, &api_key);
+    core_refactor_text_import(&client, &raw_text, &current_questions, &warnings, &model)
+        .await
+        .map_err(|e| CommandError(format!("Text import refactor error: {e}")))
 }
 
 #[tauri::command]
@@ -687,6 +709,7 @@ pub fn run() {
             answer_question,
             judge_answer,
             explain_question,
+            refactor_text_import,
             parse_file_text,
             parse_file_bytes,
             export_csv,
