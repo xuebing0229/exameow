@@ -4,7 +4,7 @@
 
     <application>
         <provider
-            android:name="androidx.core.content.FileProvider"
+            android:name="com.exameow.appupdate.AppUpdateFileProvider"
             android:authorities="${applicationId}.appupdate.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">

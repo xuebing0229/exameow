@@ -23,6 +23,8 @@ import java.util.concurrent.Executors
 private const val LATEST_RELEASE_API =
   "https://api.github.com/repos/xuebing0229/exameow/releases/latest"
 
+class AppUpdateFileProvider : FileProvider()
+
 @InvokeArg
 class DownloadArgs {
   lateinit var url: String
