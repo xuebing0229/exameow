@@ -207,6 +207,9 @@ export interface LocaleMessages {
   practiceImportColAnalysis: string
   practiceDownloadTemplate: string
   practiceExportBank: string
+  practiceRenameBank?: string
+  practiceBankNamePlaceholder?: string
+  practiceRenameSave?: string
   practiceMapTitle: string
   practiceMapHint: string
   practiceMapFieldOptions: string
@@ -665,6 +668,9 @@ export const zh: LocaleMessages = {
   practiceImportColAnalysis: '解析',
   practiceDownloadTemplate: '下载题库模板',
   practiceExportBank: '导出题库',
+  practiceRenameBank: '重命名题库',
+  practiceBankNamePlaceholder: '请输入题库名称',
+  practiceRenameSave: '保存',
   practiceMapTitle: '匹配表格列',
   practiceMapHint: '部分必填列未能自动识别，请手动选择对应的列',
   practiceMapFieldOptions: '选项列',
@@ -1123,6 +1129,9 @@ export const zhTW: LocaleMessages = {
   practiceImportColAnalysis: '解析',
   practiceDownloadTemplate: '下载題庫模板',
   practiceExportBank: '導出題庫',
+  practiceRenameBank: '重新命名題庫',
+  practiceBankNamePlaceholder: '請輸入題庫名稱',
+  practiceRenameSave: '儲存',
   practiceMapTitle: '匹配表格列',
   practiceMapHint: '部分必填列未能自动識別，请手动選擇对应的列',
   practiceMapFieldOptions: '选项列',
@@ -1581,6 +1590,9 @@ export const en: LocaleMessages = {
   practiceImportColAnalysis: 'Analysis',
   practiceDownloadTemplate: 'Download Template',
   practiceExportBank: 'Export Question Bank',
+  practiceRenameBank: 'Rename question bank',
+  practiceBankNamePlaceholder: 'Enter a question bank name',
+  practiceRenameSave: 'Save',
   practiceMapTitle: 'Map Columns',
   practiceMapHint: 'Some required columns could not be detected. Please map them manually.',
   practiceMapFieldOptions: 'Option columns',

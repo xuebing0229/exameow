@@ -46,6 +46,9 @@ const showImportDialog = ref(false)
 const showDeleteConfirm = ref(false)
 const showClearSessionConfirm = ref(false)
 const deleteBankId = ref<string | null>(null)
+const showRenameDialog = ref(false)
+const renameBankId = ref<string | null>(null)
+const renameBankName = ref('')
 const showSubmitConfirm = ref(false)
 const showAnswerSheet = ref(false)
 const autoAdvancing = ref(false)
@@ -568,6 +571,23 @@ function confirmDelete() {
   deleteBankId.value = null
 }
 
+function handleRename(bank: { id: string; name: string }) {
+  renameBankId.value = bank.id
+  renameBankName.value = bank.name
+  showRenameDialog.value = true
+}
+
+function closeRenameDialog() {
+  showRenameDialog.value = false
+  renameBankId.value = null
+  renameBankName.value = ''
+}
+
+function confirmRename() {
+  if (!renameBankId.value || !practiceStore.renameBank(renameBankId.value, renameBankName.value)) return
+  closeRenameDialog()
+}
+
 function handleBack() {
   if (viewState.value === 'select-mode') {
     viewState.value = 'browse'
@@ -688,6 +708,7 @@ function handleBack() {
         :selected-id="selectedBankId"
         @select="selectBank"
         @delete="handleDelete"
+        @rename="handleRename"
         @import="showImportDialog = true"
         @manage-wrong="handleManageWrong"
       />
@@ -869,6 +890,32 @@ function handleBack() {
             </button>
           </div>
         </div>
+      </div>
+    </Transition>
+
+    <!-- Rename Bank Dialog -->
+    <Transition name="scale">
+      <div v-if="showRenameDialog" class="scrim flex items-center justify-center p-4" @click.self="closeRenameDialog">
+        <form class="card-elevated w-full max-w-sm p-5" @submit.prevent="confirmRename">
+          <div class="text-title-sm mb-4" :style="{ color: 'rgb(var(--md-on-surface))' }">
+            {{ i18n.t('practiceRenameBank') }}
+          </div>
+          <input
+            v-model="renameBankName"
+            class="input-outlined w-full"
+            :placeholder="i18n.t('practiceBankNamePlaceholder')"
+            maxlength="100"
+            autofocus
+          />
+          <div class="flex gap-3 mt-4">
+            <button type="button" class="btn-outlined flex-1" @click="closeRenameDialog">
+              {{ i18n.t('practiceCancel') }}
+            </button>
+            <button type="submit" class="btn-filled flex-1" :disabled="!renameBankName.trim()">
+              {{ i18n.t('practiceRenameSave') }}
+            </button>
+          </div>
+        </form>
       </div>
     </Transition>
 

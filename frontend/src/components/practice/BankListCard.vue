@@ -13,6 +13,7 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ShareIcon,
+  PencilSquareIcon,
 } from '@heroicons/vue/24/outline'
 import { isAndroid } from '@/utils/platform'
 
@@ -24,6 +25,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'select', id: string): void
   (e: 'delete', id: string): void
+  (e: 'rename', bank: QuestionBank): void
   (e: 'import'): void
   (e: 'manageWrong', bankId: string): void
 }>()
@@ -313,6 +315,13 @@ const hasExportMessage = computed(() => templateExportSuccess.value || templateE
       </div>
 
       <div class="flex flex-wrap items-center gap-2 mt-3">
+        <button
+          class="btn-icon !w-7 !h-7 sm:!w-8 sm:!h-8 shrink-0"
+          :title="i18n.t('practiceRenameBank')"
+          @click.stop="emit('rename', bank)"
+        >
+          <PencilSquareIcon class="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        </button>
         <div
           class="relative shrink-0"
           @mouseenter="openExportMenu(bank.id)"

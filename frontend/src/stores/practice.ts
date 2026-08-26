@@ -149,6 +149,15 @@ export const usePracticeStore = defineStore('practice', () => {
     saveBanks(banks.value)
   }
 
+  function renameBank(id: string, name: string): boolean {
+    const bank = banks.value.find(b => b.id === id)
+    const nextName = name.trim()
+    if (!bank || !nextName) return false
+    bank.name = nextName
+    saveBanks(banks.value)
+    return true
+  }
+
   function getBank(id: string): QuestionBank | undefined {
     return banks.value.find(b => b.id === id)
   }
@@ -451,6 +460,7 @@ export const usePracticeStore = defineStore('practice', () => {
     autoGradedCount,
     addBank,
     removeBank,
+    renameBank,
     getBank,
     saveGeneratedAsBank,
     startSession,

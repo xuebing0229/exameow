@@ -141,7 +141,8 @@ function buildIndex(banks: QuestionBank[], settings: SearchSettings): CorpusInde
 function getIndex(banks: QuestionBank[], settings: SearchSettings): CorpusIndex {
   let questionTotal = 0
   for (const b of banks) questionTotal += b.questions.length
-  const key = `${settings.scope}|${settings.bankIds?.join(',') ?? ''}|${settings.types?.join(',') ?? ''}|${banks.length}:${questionTotal}`
+  const bankNames = JSON.stringify(banks.map(bank => bank.name))
+  const key = `${settings.scope}|${settings.bankIds?.join(',') ?? ''}|${settings.types?.join(',') ?? ''}|${banks.length}:${questionTotal}|${bankNames}`
   if (indexCache && indexCache.banks === banks && indexCache.key === key) {
     return indexCache.index
   }
