@@ -64,8 +64,14 @@ async function processFrame(bitmap: ImageBitmap) {
 
   if (store.status !== 'scanning') return
 
-  if (!text.trim()) return
-  if (text.replace(/\s+/g, '').length < 8) return
+  if (!text.trim()) {
+    store.setResult(null, '')
+    return
+  }
+  if (text.replace(/\s+/g, '').length < 8) {
+    store.setResult(null, text)
+    return
+  }
 
   log(`OCR ${ocrMs}ms:`, text.slice(0, 80))
 
@@ -75,7 +81,7 @@ async function processFrame(bitmap: ImageBitmap) {
     bankIds: settings.bankIds,
     scope: settings.scope,
     types: settings.types,
-    mode: 'search',
+    mode: 'scan',
   })
 
   const decision = decideScanResult(store.currentResult?.question ?? null, hits)

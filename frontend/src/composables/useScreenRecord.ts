@@ -88,6 +88,7 @@ async function processFrameBitmap(bitmap: ImageBitmap) {
   }
   if (sum === 0) {
     log('画布全零（窗口可能被遮挡），丢弃本帧')
+    store.setResult(null, '')
     return
   }
 
@@ -102,10 +103,12 @@ async function processFrameBitmap(bitmap: ImageBitmap) {
   }
   if (!text.trim()) {
     log(`OCR ${ocrMs}ms，无文本`)
+    store.setResult(null, '')
     return
   }
   if (text.replace(/\s+/g, '').length < 8) {
     log(`OCR ${ocrMs}ms，文本过短，忽略:`, text.slice(0, 30))
+    store.setResult(null, text)
     return
   }
   log(`OCR ${ocrMs}ms (${canvas.width}x${canvas.height}):`, text.slice(0, 100) + (text.length > 100 ? '…' : ''))
@@ -116,12 +119,23 @@ async function processFrameBitmap(bitmap: ImageBitmap) {
     bankIds: settings.bankIds,
     scope: settings.scope,
     types: settings.types,
-    mode: 'search',
+    mode: 'scan',
   })
 
   log('候选:', hits.length
     ? hits.slice(0, 3).map((hh) => `${hh.question.stem.slice(0, 16)}…=${hh.score.toFixed(2)}`).join(' | ')
     : '无')
+
+  if (store.mode === 'floating') {
+    const hit = hits[0]
+    store.setResult(
+      hit
+        ? { question: hit.question, bankName: hit.bankName, score: hit.score }
+        : null,
+      text,
+    )
+    return
+  }
 
   const decision = decideScanResult(store.currentResult?.question ?? null, hits)
   log('决策:', decision.reason, `→ ${decision.action}`)
@@ -246,8 +260,9 @@ export function useScreenRecord() {
       if (msg?.type !== 'frame') log(`通道消息: ${String(msg?.type)}`)
       switch (msg?.type) {
         case 'begin':
+          if (store.mode === 'floating') store.setResult(null, '')
           store.beginRecording()
-          void pushAnswerToOverlay()
+          if (store.mode !== 'floating') void pushAnswerToOverlay()
           break
         case 'frame':
           void processFrameMobile(`data:image/jpeg;base64,${String(msg.data ?? '')}`)
