@@ -208,8 +208,13 @@ class ScreenRecordService : Service() {
         cropped = r
       }
 
-      val scale = minOf(1f, MAX_OCR_SIDE.toFloat() / maxOf(cropped.width, cropped.height))
-      val finalBitmap = if (scale < 1f) {
+      val longestSide = maxOf(cropped.width, cropped.height)
+      val scale = when {
+        longestSide > MAX_OCR_SIDE -> MAX_OCR_SIDE.toFloat() / longestSide
+        longestSide < 640 -> minOf(2f, 640f / longestSide)
+        else -> 1f
+      }
+      val finalBitmap = if (scale != 1f) {
         val scaled = Bitmap.createScaledBitmap(
           cropped,
           (cropped.width * scale).toInt().coerceAtLeast(1),
@@ -223,9 +228,11 @@ class ScreenRecordService : Service() {
       }
 
       val baos = ByteArrayOutputStream()
-      finalBitmap.compress(Bitmap.CompressFormat.JPEG, 75, baos)
+      finalBitmap.compress(Bitmap.CompressFormat.JPEG, 94, baos)
       finalBitmap.recycle()
-      val b64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
+      val jpeg = baos.toByteArray()
+      ScreenRecordRuntime.lastFrameJpeg = jpeg
+      val b64 = Base64.encodeToString(jpeg, Base64.NO_WRAP)
 
       ScreenRecordRuntime.send("frame") { put("data", b64) }
       return true
@@ -248,6 +255,7 @@ class ScreenRecordService : Service() {
     }
     mediaProjection = null
     ScreenRecordRuntime.service = null
+    ScreenRecordRuntime.lastFrameJpeg = null
     stopForeground(true)
     stopSelf()
   }

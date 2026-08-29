@@ -24,6 +24,7 @@ object ScreenRecordRuntime {
   var events: Channel? = null
   var service: ScreenRecordService? = null
   var overlay: OverlayController? = null
+  @Volatile var lastFrameJpeg: ByteArray? = null
 
   fun send(type: String, fill: (JSObject.() -> Unit) = {}) {
     val obj = JSObject()

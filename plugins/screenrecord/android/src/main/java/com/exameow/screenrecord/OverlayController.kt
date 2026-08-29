@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.BitmapFactory
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Handler
@@ -25,6 +26,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import kotlin.math.max
@@ -49,6 +51,7 @@ class OverlayController(
 
   private var frameParams: WindowManager.LayoutParams? = null
   private var frameContainer: FrameLayout? = null
+  @Volatile private var frameScreenRect: Rect? = null
   private var frameVisible = true
 
   private var ballParams: WindowManager.LayoutParams? = null
@@ -62,6 +65,7 @@ class OverlayController(
   private lateinit var optionsLabel: TextView
   private lateinit var bankLabel: TextView
   private lateinit var emptyLabel: TextView
+  private lateinit var previewImage: ImageView
   private lateinit var beginCardButton: TextView
   private lateinit var adjustButton: ImageButton
   private var everBegan = false
@@ -195,13 +199,30 @@ class OverlayController(
   }
 
   fun frameRect(): Rect? {
+    frameScreenRect?.let { return Rect(it) }
     val p = frameParams ?: return null
     return Rect(p.x, p.y, p.x + p.width, p.y + p.height)
   }
 
+  private fun updateFrameScreenRect() {
+    val view = frameContainer ?: return
+    if (!view.isAttachedToWindow || view.width <= 0 || view.height <= 0) return
+    val location = IntArray(2)
+    view.getLocationOnScreen(location)
+    frameScreenRect = Rect(
+      location[0],
+      location[1],
+      location[0] + view.width,
+      location[1] + view.height,
+    )
+  }
+
   fun hideFrame() {
     frameVisible = false
-    mainHandler.post { frameContainer?.visibility = View.GONE }
+    mainHandler.post {
+      updateFrameScreenRect()
+      frameContainer?.visibility = View.GONE
+    }
   }
 
   fun hideAnswer() {
@@ -220,6 +241,7 @@ class OverlayController(
       }
       frameContainer = null
       frameParams = null
+      frameScreenRect = null
       answerRoot?.let {
         try { wm.removeView(it) } catch (_: Exception) {}
       }
@@ -399,6 +421,7 @@ class OverlayController(
     border.setOnTouchListener(FrameTouchListener())
     frameContainer = container
     wm.addView(container, p)
+    container.post { updateFrameScreenRect() }
   }
 
   private inner class FrameTouchListener : View.OnTouchListener {
@@ -463,7 +486,14 @@ class OverlayController(
             p.width = min(newW, screenW)
             p.height = min(newH, screenH)
           }
-          frameContainer?.let { wm.updateViewLayout(it, p) }
+          frameContainer?.let {
+            wm.updateViewLayout(it, p)
+            it.post { updateFrameScreenRect() }
+          }
+          return true
+        }
+        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+          updateFrameScreenRect()
           return true
         }
       }
@@ -599,6 +629,15 @@ class OverlayController(
     bankLp.topMargin = dp(3f)
     root.addView(bankLabel, bankLp)
 
+    previewImage = ImageView(activity).apply {
+      adjustViewBounds = true
+      scaleType = ImageView.ScaleType.FIT_CENTER
+      visibility = View.GONE
+    }
+    val previewLp = LinearLayout.LayoutParams(MATCH_PARENT, dp(110f))
+    previewLp.topMargin = dp(5f)
+    root.addView(previewImage, previewLp)
+
     emptyLabel = TextView(activity).apply {
       text = "未匹配到题目"
       setTextColor(textSecondary)
@@ -728,6 +767,7 @@ class OverlayController(
         }
         pausedChip.visibility = if (paused) View.VISIBLE else View.GONE
         emptyLabel.visibility = View.GONE
+        previewImage.visibility = View.GONE
         answerLabel.visibility = View.GONE
         stemLabel.visibility = View.GONE
         optionsLabel.visibility = View.GONE
@@ -744,6 +784,15 @@ class OverlayController(
         } else {
           "未匹配到题目\n识别文字：$recognized"
         }
+        val preview = ScreenRecordRuntime.lastFrameJpeg
+        val bitmap = preview?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+        if (bitmap != null) {
+          previewImage.setImageBitmap(bitmap)
+          previewImage.visibility = View.VISIBLE
+        } else {
+          previewImage.setImageDrawable(null)
+          previewImage.visibility = View.GONE
+        }
         answerLabel.visibility = View.GONE
         stemLabel.visibility = View.GONE
         optionsLabel.visibility = View.GONE
@@ -752,6 +801,7 @@ class OverlayController(
       }
 
       emptyLabel.visibility = View.GONE
+      previewImage.visibility = View.GONE
       answerLabel.visibility = View.VISIBLE
       answerLabel.text = "答案: $answer"
       stemLabel.visibility = View.VISIBLE
