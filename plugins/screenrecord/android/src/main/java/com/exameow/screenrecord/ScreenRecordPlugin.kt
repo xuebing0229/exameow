@@ -196,7 +196,11 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
         bankName = args.bankName,
         ocrText = args.ocrText,
       )
-      if (floatingMode && !args.paused) overlay.finishFloatingCapture()
+      if (floatingMode && !args.paused) {
+        overlay.finishFloatingCapture()
+      } else if (!floatingMode && !args.paused && !adjusting) {
+        ScreenRecordRuntime.service?.captureNext()
+      }
     }
     invoke.resolve()
   }
@@ -208,13 +212,13 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
     overlay?.markBegan()
     overlay?.setAdjusting(false)
     overlay?.hideFrame()
+    ScreenRecordRuntime.send("begin")
     if (floatingMode) {
       overlay?.hideAnswer()
       ScreenRecordRuntime.service?.captureOnce()
     } else {
       ScreenRecordRuntime.service?.startCapture()
     }
-    ScreenRecordRuntime.send("begin")
   }
 
   override fun onAdjustClicked() {
@@ -236,8 +240,8 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
       ScreenRecordRuntime.send("adjust")
     } else {
       overlay?.hideFrame()
-      ScreenRecordRuntime.service?.startCapture()
       ScreenRecordRuntime.send("begin")
+      ScreenRecordRuntime.service?.startCapture()
     }
   }
 

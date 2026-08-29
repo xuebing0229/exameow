@@ -59,6 +59,7 @@ class OverlayController(
 
   private var answerParams: WindowManager.LayoutParams? = null
   private var answerRoot: LinearLayout? = null
+  private var exitConfirmRoot: LinearLayout? = null
   private lateinit var pausedChip: TextView
   private lateinit var answerLabel: TextView
   private lateinit var stemLabel: TextView
@@ -271,6 +272,10 @@ class OverlayController(
       }
       ballView = null
       ballParams = null
+      exitConfirmRoot?.let {
+        try { wm.removeView(it) } catch (_: Exception) {}
+      }
+      exitConfirmRoot = null
     }
   }
 
@@ -562,7 +567,7 @@ class OverlayController(
     }
     header.addView(titleView!!, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
     header.addView(iconButton(R.drawable.ic_adjust) { listener.onAdjustClicked() }.also { adjustButton = it })
-    header.addView(iconButton(R.drawable.ic_close, DANGER) { listener.onExitClicked() })
+    header.addView(iconButton(R.drawable.ic_close, DANGER) { showExitConfirmation() })
     root.addView(header)
 
     beginCardButton = TextView(activity).apply {
@@ -690,6 +695,78 @@ class OverlayController(
         leftMargin = dp(4f)
       }
       setOnClickListener { onClick() }
+    }
+  }
+
+  private fun showExitConfirmation() {
+    mainHandler.post {
+      if (exitConfirmRoot != null) return@post
+
+      val width = min(dp(280f), screenW - dp(28f))
+      val p = overlayParams(
+        width,
+        WRAP_CONTENT,
+        (screenW - width) / 2,
+        (screenH * 0.38f).toInt(),
+      )
+      val root = LinearLayout(activity).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(dp(18f), dp(16f), dp(18f), dp(14f))
+        elevation = dp(14f).toFloat()
+        background = GradientDrawable().apply {
+          setColor(cardBgColor)
+          cornerRadius = dp(20f).toFloat()
+        }
+      }
+      root.addView(TextView(activity).apply {
+        text = "关闭悬浮搜题？"
+        setTextColor(textPrimary)
+        textSize = 16f
+        typeface = android.graphics.Typeface.DEFAULT_BOLD
+      })
+      root.addView(TextView(activity).apply {
+        text = "关闭后将停止录屏和题目识别。"
+        setTextColor(textSecondary)
+        textSize = 12f
+        setPadding(0, dp(7f), 0, dp(14f))
+      })
+
+      val actions = LinearLayout(activity).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.END
+      }
+      actions.addView(TextView(activity).apply {
+        text = "取消"
+        setTextColor(accent)
+        textSize = 13f
+        gravity = Gravity.CENTER
+        setPadding(dp(16f), dp(9f), dp(16f), dp(9f))
+        setOnClickListener {
+          exitConfirmRoot?.let { view -> try { wm.removeView(view) } catch (_: Exception) {} }
+          exitConfirmRoot = null
+        }
+      })
+      actions.addView(TextView(activity).apply {
+        text = "确认关闭"
+        setTextColor(Color.WHITE)
+        textSize = 13f
+        typeface = android.graphics.Typeface.DEFAULT_BOLD
+        gravity = Gravity.CENTER
+        setPadding(dp(16f), dp(9f), dp(16f), dp(9f))
+        background = GradientDrawable().apply {
+          setColor(DANGER)
+          cornerRadius = dp(18f).toFloat()
+        }
+        setOnClickListener {
+          exitConfirmRoot?.let { view -> try { wm.removeView(view) } catch (_: Exception) {} }
+          exitConfirmRoot = null
+          listener.onExitClicked()
+        }
+      })
+      root.addView(actions)
+
+      exitConfirmRoot = root
+      wm.addView(root, p)
     }
   }
 

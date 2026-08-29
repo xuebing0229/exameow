@@ -31,7 +31,7 @@ class ScreenRecordService : Service() {
     const val ACTION_STOP = "com.exameow.screenrecord.STOP"
     const val EXTRA_RESULT_CODE = "resultCode"
     const val EXTRA_DATA = "data"
-    private const val CAPTURE_INTERVAL_MS = 1500L
+    private const val CAPTURE_RETRY_MS = 150L
     private const val MAX_OCR_SIDE = 1280
   }
 
@@ -50,12 +50,15 @@ class ScreenRecordService : Service() {
   private val captureLoop = object : Runnable {
     override fun run() {
       if (!capturing) return
-      try {
+      val captured = try {
         grabFrame()
       } catch (e: Exception) {
         Log.e("ScreenRecord", "grabFrame failed", e)
+        false
       }
-      handler.postDelayed(this, CAPTURE_INTERVAL_MS)
+      // A successful frame is followed by OCR in the WebView. The plugin asks
+      // for the next frame only after that result returns, avoiding a backlog.
+      if (!captured && capturing) handler.postDelayed(this, CAPTURE_RETRY_MS)
     }
   }
 
@@ -163,7 +166,13 @@ class ScreenRecordService : Service() {
   fun startCapture() {
     if (capturing) return
     capturing = true
-    handler.post(captureLoop)
+    handler.postDelayed(captureLoop, 220L)
+  }
+
+  fun captureNext() {
+    if (!capturing) return
+    handler.removeCallbacks(captureLoop)
+    handler.postDelayed(captureLoop, 350L)
   }
 
   fun stopCapture() {
