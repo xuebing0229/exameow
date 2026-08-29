@@ -50,6 +50,7 @@ class ShowAnswerArgs {
   var stem: String = ""
   var options: List<String> = emptyList()
   var bankName: String = ""
+  var ocrText: String = ""
   var dark: Boolean = false
 }
 
@@ -186,6 +187,7 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
         stem = args.stem,
         options = args.options,
         bankName = args.bankName,
+        ocrText = args.ocrText,
       )
       if (floatingMode && !args.paused) overlay.finishFloatingCapture()
     }

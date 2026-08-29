@@ -438,8 +438,8 @@ class OverlayController(
         MotionEvent.ACTION_MOVE -> {
           val dx = (event.rawX - startRawX).toInt()
           val dy = (event.rawY - startRawY).toInt()
-          val minW = dp(180f)
-          val minH = dp(110f)
+          val minW = dp(96f)
+          val minH = dp(56f)
           if (mode == 0) {
             p.x = (startX + dx).coerceIn(-startW / 2, screenW - startW / 2)
             p.y = (startY + dy).coerceIn(0, screenH - dp(48f))
@@ -713,6 +713,7 @@ class OverlayController(
     stem: String,
     options: List<String>,
     bankName: String,
+    ocrText: String,
   ) {
     mainHandler.post {
       if (answerRoot == null) return@post
@@ -737,7 +738,12 @@ class OverlayController(
       pausedChip.visibility = View.GONE
       if (!found) {
         emptyLabel.visibility = View.VISIBLE
-        emptyLabel.text = "未匹配到题目"
+        val recognized = ocrText.replace(Regex("\\s+"), " ").trim().take(160)
+        emptyLabel.text = if (recognized.isEmpty()) {
+          "未识别到文字\n请扩大框选范围或提高画面清晰度"
+        } else {
+          "未匹配到题目\n识别文字：$recognized"
+        }
         answerLabel.visibility = View.GONE
         stemLabel.visibility = View.GONE
         optionsLabel.visibility = View.GONE

@@ -240,6 +240,7 @@ export function useScreenRecord() {
         stem: r?.question.stem ?? '',
         options: r?.question.options ?? [],
         bankName: r?.bankName ?? '',
+        ocrText: store.ocrText,
         dark,
       })
     } catch { /* overlay gone */ }

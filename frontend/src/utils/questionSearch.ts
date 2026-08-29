@@ -30,7 +30,7 @@ export function normalizeText(s: string): string {
     .replace(/[\u2E80-\u2EFF\u2F00-\u2FDF\uF900-\uFAFF]/g, (ch) => ch.normalize('NFKC'))
     .toLowerCase()
     .replace(/[！-～]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
-    .replace(/\s+/g, '')
+    .replace(/[^\p{L}\p{N}]/gu, '')
 }
 
 function bigrams(s: string): Map<string, number> {
@@ -85,6 +85,7 @@ interface DocEntry {
   bankName: string
   stemNorm: string
   optionNorms: string[]
+  stemTermFreq: Map<string, number>
   termFreq: Map<string, number>
   len: number
 }
@@ -117,6 +118,7 @@ function buildIndex(banks: QuestionBank[], settings: SearchSettings): CorpusInde
         ? question.options.map(normalizeText)
         : []
       const docText = stemNorm + optionNorms.join('')
+      const stemTermFreq = bigrams(stemNorm)
       const termFreq = bigrams(docText)
       let len = 0
       for (const n of termFreq.values()) len += n
@@ -126,7 +128,7 @@ function buildIndex(banks: QuestionBank[], settings: SearchSettings): CorpusInde
         df.set(term, (df.get(term) || 0) + 1)
       }
 
-      docs.push({ question, bankId: bank.id, bankName: bank.name, stemNorm, optionNorms, termFreq, len })
+      docs.push({ question, bankId: bank.id, bankName: bank.name, stemNorm, optionNorms, stemTermFreq, termFreq, len })
     }
   }
 
@@ -208,20 +210,29 @@ export function searchQuestions(
   const minScore = mode === 'scan' ? SCAN_MIN_SCORE : FUZZY_MIN_SCORE
 
   if (mode === 'scan') {
+    const coverageScore = (terms: Map<string, number>, queryTerms: Map<string, number>): number => {
+      let mass = 0
+      let covered = 0
+      for (const [term, f] of terms) {
+        const w = idfOf(term) * ((f * (BM25_K1 + 1)) / (f + BM25_K1))
+        mass += w
+        if (queryTerms.has(term)) covered += w
+      }
+      return mass > 0 ? Math.min(1, covered / mass) : 0
+    }
+
     for (const doc of index.docs) {
       let tier: MatchTier = 'fuzzy'
       if (isExactMatch(q, doc.stemNorm) || doc.optionNorms.some((o) => isExactMatch(q, o))) {
         tier = 'exact'
       }
 
-      let mass = 0
-      let covered = 0
-      for (const [term, f] of doc.termFreq) {
-        const w = idfOf(term) * ((f * (BM25_K1 + 1)) / (f + BM25_K1))
-        mass += w
-        if (qTerms.has(term)) covered += w
-      }
-      const score = mass > 0 ? Math.min(1, covered / mass) : 0
+      // A crop often contains only the stem. Scoring solely against stem + all
+      // options unfairly dilutes a correct stem match, so keep the stronger view.
+      const score = Math.max(
+        coverageScore(doc.stemTermFreq, qTerms),
+        coverageScore(doc.termFreq, qTerms),
+      )
 
       if (tier === 'exact' || score >= minScore) {
         hits.push({ question: doc.question, bankId: doc.bankId, bankName: doc.bankName, score, tier })
