@@ -257,6 +257,16 @@ class OverlayController(
     mainHandler.post { answerRoot?.visibility = View.GONE }
   }
 
+  private fun closeAnswerPanel() {
+    if (!floatingMode) {
+      showExitConfirmation()
+      return
+    }
+    hideFrame()
+    hideAnswer()
+    showFloatBall()
+  }
+
   fun showFrame() {
     frameVisible = true
     mainHandler.post { frameContainer?.visibility = View.VISIBLE }
@@ -582,8 +592,11 @@ class OverlayController(
       typeface = android.graphics.Typeface.DEFAULT_BOLD
     }
     header.addView(titleView!!, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
-    header.addView(iconButton(R.drawable.ic_adjust) { listener.onAdjustClicked() }.also { adjustButton = it })
-    header.addView(iconButton(R.drawable.ic_close, DANGER) { showExitConfirmation() })
+    header.addView(
+      iconButton(R.drawable.ic_adjust, sizeDp = 36f) { listener.onAdjustClicked() }
+        .also { adjustButton = it },
+    )
+    header.addView(iconButton(R.drawable.ic_close, DANGER) { closeAnswerPanel() })
     root.addView(header)
 
     beginCardButton = TextView(activity).apply {
@@ -707,14 +720,19 @@ class OverlayController(
     wm.addView(root, p)
   }
 
-  private fun iconButton(iconRes: Int, color: Int = iconButtonColor, onClick: () -> Unit): ImageButton {
+  private fun iconButton(
+    iconRes: Int,
+    color: Int = iconButtonColor,
+    sizeDp: Float = 24f,
+    onClick: () -> Unit,
+  ): ImageButton {
     return ImageButton(activity).apply {
       setImageResource(iconRes)
       setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN)
       scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
-      val padding = dp(4f)
+      val padding = dp(if (sizeDp > 24f) 6f else 4f)
       setPadding(padding, padding, padding, padding)
-      val size = dp(24f)
+      val size = dp(sizeDp)
       background = GradientDrawable().apply {
         setColor(fill)
         cornerRadius = size / 2f
