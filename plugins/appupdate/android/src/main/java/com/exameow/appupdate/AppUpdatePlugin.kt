@@ -81,7 +81,14 @@ class AppUpdatePlugin(private val activity: Activity) : Plugin(activity) {
     executor.execute {
       try {
         val updateDir = File(activity.cacheDir, "updates").apply { mkdirs() }
-        val apk = File(updateDir, "Exameow-update.apk")
+        val assetName = Uri.parse(args.url).lastPathSegment
+          ?.takeIf { it.startsWith("Exameow-v") && it.endsWith("-android_arm64.apk") }
+          ?: "Exameow-update-${System.currentTimeMillis()}.apk"
+        val apk = File(updateDir, assetName)
+        updateDir.listFiles()
+          ?.filter { it.isFile && it.extension == "apk" && it != apk }
+          ?.forEach { it.delete() }
+        if (apk.exists()) apk.delete()
         download(args.url, apk, args.events)
 
         val uri = FileProvider.getUriForFile(
