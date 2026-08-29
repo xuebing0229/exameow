@@ -72,7 +72,12 @@ class OverlayController(
   private var everBegan = false
   private var floatingMode = false
   private var currentDark = false
-  private var answerTextScale = 1f
+  private val overlayPrefs = activity.getSharedPreferences(
+    "screenrecord_overlay_display",
+    android.content.Context.MODE_PRIVATE,
+  )
+  private var answerTextScale = overlayPrefs.getFloat(PREF_ANSWER_TEXT_SCALE, 1f)
+  private var answerWidthDp = overlayPrefs.getInt(PREF_ANSWER_WIDTH_DP, 280)
   private var titleView: TextView? = null
   private var gripView: View? = null
 
@@ -93,6 +98,8 @@ class OverlayController(
     private const val TEXT_SECONDARY = 0x993C3C43.toInt()
     private const val FILL = 0x143C3C43
     private const val DANGER = 0xFFFF3B30.toInt()
+    private const val PREF_ANSWER_TEXT_SCALE = "answer_text_scale"
+    private const val PREF_ANSWER_WIDTH_DP = "answer_width_dp"
   }
 
   init {
@@ -537,7 +544,7 @@ class OverlayController(
   // ==================== 答案卡片 ====================
 
   private fun showAnswerOverlay() {
-    val width = min(dp(280f), screenW - dp(10f))
+    val width = min(dp(answerWidthDp.toFloat()), screenW - dp(10f))
     val p = overlayParams(width, WRAP_CONTENT, screenW - width - dp(6f), (screenH * 0.5f).toInt())
     answerParams = p
 
@@ -679,6 +686,7 @@ class OverlayController(
       setPadding(0, dp(8f), 0, dp(6f))
     }
     root.addView(emptyLabel)
+    applyAnswerTextScale()
 
     val displayControls = LinearLayout(activity).apply {
       orientation = LinearLayout.HORIZONTAL
@@ -742,11 +750,18 @@ class OverlayController(
     val maxWidth = min(dp(380f), screenW - dp(10f))
     p.width = (p.width + dp(deltaDp)).coerceIn(dp(180f), maxWidth)
     p.x = p.x.coerceIn(0, screenW - p.width)
+    answerWidthDp = (p.width / activity.resources.displayMetrics.density).toInt()
+    overlayPrefs.edit().putInt(PREF_ANSWER_WIDTH_DP, answerWidthDp).apply()
     answerRoot?.let { wm.updateViewLayout(it, p) }
   }
 
   private fun changeAnswerTextScale(delta: Float) {
     answerTextScale = (answerTextScale + delta).coerceIn(0.75f, 1.9f)
+    overlayPrefs.edit().putFloat(PREF_ANSWER_TEXT_SCALE, answerTextScale).apply()
+    applyAnswerTextScale()
+  }
+
+  private fun applyAnswerTextScale() {
     answerLabel.textSize = 15f * answerTextScale
     stemLabel.textSize = 10f * answerTextScale
     optionsLabel.textSize = 9f * answerTextScale
