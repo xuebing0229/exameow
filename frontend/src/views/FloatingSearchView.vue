@@ -26,6 +26,10 @@ async function startFloatingSearch() {
     const msg = String(e)
     if (msg.includes('overlay_permission')) {
       alert(i18n.t('searchScreenRecordOverlayPerm'))
+    } else if (msg.includes('accessibility_service_required')) {
+      alert('请开启“Exameow 悬浮搜题截图”无障碍服务，返回后再次点击开启悬浮窗。若开关不可用，请先在 Exameow 的应用信息右上角菜单中选择“允许受限设置”。')
+    } else if (msg.includes('accessibility_screenshot_unsupported')) {
+      alert('无录屏悬浮搜题需要 Android 11 或更高版本')
     } else if (msg.includes('projection_denied')) {
       alert(i18n.t('searchScreenRecordProjectionDenied'))
     } else {

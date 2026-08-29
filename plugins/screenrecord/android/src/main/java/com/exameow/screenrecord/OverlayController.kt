@@ -179,10 +179,10 @@ class OverlayController(
     }
   }
 
-  fun failFloatingCapture() {
+  fun failFloatingCapture(message: String = "截图失败，请重试") {
     if (!floatingMode) return
     mainHandler.post {
-      emptyLabel.text = "截图失败，请重试"
+      emptyLabel.text = message
       emptyLabel.visibility = View.VISIBLE
       answerRoot?.visibility = View.VISIBLE
       showFloatBall()

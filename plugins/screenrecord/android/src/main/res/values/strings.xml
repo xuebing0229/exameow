@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="accessibility_service_label">Exameow 悬浮搜题截图</string>
+    <string name="accessibility_service_description">仅在点击悬浮搜题按钮时截取当前画面，并裁剪所选题目区域进行本地文字识别；不会读取控件内容或自动操作。</string>
+</resources>

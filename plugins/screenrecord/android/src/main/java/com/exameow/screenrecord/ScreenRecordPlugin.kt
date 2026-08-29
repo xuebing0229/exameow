@@ -76,7 +76,39 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
   @Command
   fun startFloatSession(invoke: Invoke) {
     floatingMode = true
-    startSessionCommon(invoke)
+    val args = invoke.parseArgs(StartSessionArgs::class.java)
+    ScreenRecordRuntime.events = args.events
+
+    if (!Settings.canDrawOverlays(activity)) {
+      val intent = Intent(
+        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+        Uri.parse("package:${activity.packageName}"),
+      )
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      activity.startActivity(intent)
+      invoke.reject("overlay_permission_required")
+      return
+    }
+
+    if (Build.VERSION.SDK_INT < 30) {
+      invoke.reject("accessibility_screenshot_unsupported")
+      return
+    }
+
+    if (!ExameowAccessibilityService.isConnected()) {
+      activity.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      })
+      invoke.reject("accessibility_service_required")
+      return
+    }
+
+    val overlay = OverlayController(activity, this)
+    ScreenRecordRuntime.overlay = overlay
+    overlay.showFloatingMode()
+    ScreenRecordRuntime.send("ready")
+    Log.i("ScreenRecord", "floating accessibility capture ready")
+    invoke.resolve()
   }
 
   private fun startSessionCommon(invoke: Invoke) {
@@ -156,7 +188,9 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
     ScreenRecordRuntime.overlay?.hideFrame()
     if (floatingMode) {
       ScreenRecordRuntime.overlay?.hideAnswer()
-      ScreenRecordRuntime.service?.captureOnce()
+      if (!ExameowAccessibilityService.captureOnce()) {
+        ScreenRecordRuntime.overlay?.failFloatingCapture("请重新开启 Exameow 无障碍服务")
+      }
     } else {
       ScreenRecordRuntime.service?.startCapture()
     }
@@ -166,10 +200,10 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
   @Command
   fun adjust(invoke: Invoke) {
     adjusting = true
-    ScreenRecordRuntime.service?.stopCapture()
     if (floatingMode) {
       ScreenRecordRuntime.overlay?.prepareFloatingCapture()
     } else {
+      ScreenRecordRuntime.service?.stopCapture()
       ScreenRecordRuntime.overlay?.setAdjusting(true)
       ScreenRecordRuntime.overlay?.showFrame()
     }
@@ -215,7 +249,9 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
     ScreenRecordRuntime.send("begin")
     if (floatingMode) {
       overlay?.hideAnswer()
-      ScreenRecordRuntime.service?.captureOnce()
+      if (!ExameowAccessibilityService.captureOnce()) {
+        overlay?.failFloatingCapture("请重新开启 Exameow 无障碍服务")
+      }
     } else {
       ScreenRecordRuntime.service?.startCapture()
     }
@@ -224,7 +260,6 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
   override fun onAdjustClicked() {
     if (floatingMode) {
       adjusting = true
-      ScreenRecordRuntime.service?.stopCapture()
       ScreenRecordRuntime.overlay?.prepareFloatingCapture()
       ScreenRecordRuntime.send("adjust")
       return
@@ -260,6 +295,8 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
   private fun teardown() {
     ScreenRecordRuntime.overlay?.removeAll()
     ScreenRecordRuntime.overlay = null
+    ScreenRecordRuntime.lastFrameJpeg = null
+    if (floatingMode) return
     val intent = Intent(activity, ScreenRecordService::class.java).apply {
       action = ScreenRecordService.ACTION_STOP
     }
