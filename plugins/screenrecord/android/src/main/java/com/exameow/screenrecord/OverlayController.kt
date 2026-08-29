@@ -72,6 +72,7 @@ class OverlayController(
   private var everBegan = false
   private var floatingMode = false
   private var currentDark = false
+  private var answerTextScale = 1f
   private var titleView: TextView? = null
   private var gripView: View? = null
 
@@ -424,19 +425,23 @@ class OverlayController(
     val border = FrameBorderView()
     container.addView(border, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
 
+    val moveListener = FrameTouchListener(moveOnly = true)
+    val hint = TextView(activity).apply {
+      text = "按住此处移动，拖动边缘缩放"
+      setTextColor(Color.WHITE)
+      textSize = 11f
+      setPadding(dp(10f), dp(5f), dp(10f), dp(5f))
+      background = GradientDrawable().apply {
+        setColor(0x9E000000.toInt())
+        cornerRadius = dp(14f).toFloat()
+      }
+      setOnTouchListener(moveListener)
+    }
     val controls = LinearLayout(activity).apply {
       orientation = LinearLayout.VERTICAL
       gravity = Gravity.CENTER
-      addView(TextView(activity).apply {
-        text = "拖拽移动录制框，框住题目区域"
-        setTextColor(Color.WHITE)
-        textSize = 11f
-        setPadding(dp(10f), dp(5f), dp(10f), dp(5f))
-        background = GradientDrawable().apply {
-          setColor(0x9E000000.toInt())
-          cornerRadius = dp(14f).toFloat()
-        }
-      })
+      addView(hint)
+      setOnTouchListener(moveListener)
     }
     val cp = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
     cp.gravity = Gravity.CENTER
@@ -448,7 +453,9 @@ class OverlayController(
     container.post { updateFrameScreenRect() }
   }
 
-  private inner class FrameTouchListener : View.OnTouchListener {
+  private inner class FrameTouchListener(
+    private val moveOnly: Boolean = false,
+  ) : View.OnTouchListener {
     private var mode = 0 // 0=move, 1=n,2=s,4=w,8=e bitmask resize
     private var startRawX = 0f
     private var startRawY = 0f
@@ -466,14 +473,16 @@ class OverlayController(
           val x = event.x
           val y = event.y
           mode = 0
-          if (y < corner && x < corner) mode = 1 or 4
-          else if (y < corner && x > v.width - corner) mode = 1 or 8
-          else if (y > v.height - corner && x < corner) mode = 2 or 4
-          else if (y > v.height - corner && x > v.width - corner) mode = 2 or 8
-          else if (y < edge) mode = 1
-          else if (y > v.height - edge) mode = 2
-          else if (x < edge) mode = 4
-          else if (x > v.width - edge) mode = 8
+          if (!moveOnly) {
+            if (y < corner && x < corner) mode = 1 or 4
+            else if (y < corner && x > v.width - corner) mode = 1 or 8
+            else if (y > v.height - corner && x < corner) mode = 2 or 4
+            else if (y > v.height - corner && x > v.width - corner) mode = 2 or 8
+            else if (y < edge) mode = 1
+            else if (y > v.height - edge) mode = 2
+            else if (x < edge) mode = 4
+            else if (x > v.width - edge) mode = 8
+          }
           startRawX = event.rawX
           startRawY = event.rawY
           startX = p.x
@@ -528,7 +537,7 @@ class OverlayController(
   // ==================== 答案卡片 ====================
 
   private fun showAnswerOverlay() {
-    val width = min(dp(200f), screenW - dp(10f))
+    val width = min(dp(280f), screenW - dp(10f))
     val p = overlayParams(width, WRAP_CONTENT, screenW - width - dp(6f), (screenH * 0.5f).toInt())
     answerParams = p
 
@@ -671,6 +680,17 @@ class OverlayController(
     }
     root.addView(emptyLabel)
 
+    val displayControls = LinearLayout(activity).apply {
+      orientation = LinearLayout.HORIZONTAL
+      gravity = Gravity.CENTER
+      setPadding(0, dp(6f), 0, 0)
+    }
+    displayControls.addView(answerControlButton("窗口 −") { changeAnswerWidth(-40f) })
+    displayControls.addView(answerControlButton("窗口 +") { changeAnswerWidth(40f) })
+    displayControls.addView(answerControlButton("字号 −") { changeAnswerTextScale(-0.15f) })
+    displayControls.addView(answerControlButton("字号 +") { changeAnswerTextScale(0.15f) })
+    root.addView(displayControls, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+
     val dragListener = DragTouchListener { p }
     gripView!!.setOnTouchListener(dragListener)
     header.setOnTouchListener(dragListener)
@@ -696,6 +716,42 @@ class OverlayController(
       }
       setOnClickListener { onClick() }
     }
+  }
+
+  private fun answerControlButton(label: String, onClick: () -> Unit): TextView {
+    return TextView(activity).apply {
+      text = label
+      setTextColor(accent)
+      textSize = 10f
+      gravity = Gravity.CENTER
+      setPadding(dp(6f), dp(7f), dp(6f), dp(7f))
+      background = GradientDrawable().apply {
+        setColor(fill)
+        cornerRadius = dp(12f).toFloat()
+      }
+      layoutParams = LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f).apply {
+        leftMargin = dp(2f)
+        rightMargin = dp(2f)
+      }
+      setOnClickListener { onClick() }
+    }
+  }
+
+  private fun changeAnswerWidth(deltaDp: Float) {
+    val p = answerParams ?: return
+    val maxWidth = min(dp(380f), screenW - dp(10f))
+    p.width = (p.width + dp(deltaDp)).coerceIn(dp(180f), maxWidth)
+    p.x = p.x.coerceIn(0, screenW - p.width)
+    answerRoot?.let { wm.updateViewLayout(it, p) }
+  }
+
+  private fun changeAnswerTextScale(delta: Float) {
+    answerTextScale = (answerTextScale + delta).coerceIn(0.75f, 1.9f)
+    answerLabel.textSize = 15f * answerTextScale
+    stemLabel.textSize = 10f * answerTextScale
+    optionsLabel.textSize = 9f * answerTextScale
+    bankLabel.textSize = 8f * answerTextScale
+    emptyLabel.textSize = 10f * answerTextScale
   }
 
   private fun showExitConfirmation() {
