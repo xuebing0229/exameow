@@ -217,6 +217,25 @@ class OverlayController(
     )
   }
 
+  private fun isMostlyBlack(bitmap: android.graphics.Bitmap): Boolean {
+    var brightness = 0L
+    var samples = 0
+    val stepX = max(1, bitmap.width / 12)
+    val stepY = max(1, bitmap.height / 8)
+    var y = stepY / 2
+    while (y < bitmap.height) {
+      var x = stepX / 2
+      while (x < bitmap.width) {
+        val pixel = bitmap.getPixel(x, y)
+        brightness += Color.red(pixel) + Color.green(pixel) + Color.blue(pixel)
+        samples++
+        x += stepX
+      }
+      y += stepY
+    }
+    return samples > 0 && brightness / samples < 18
+  }
+
   fun hideFrame() {
     frameVisible = false
     mainHandler.post {
@@ -779,13 +798,16 @@ class OverlayController(
       if (!found) {
         emptyLabel.visibility = View.VISIBLE
         val recognized = ocrText.replace(Regex("\\s+"), " ").trim().take(160)
-        emptyLabel.text = if (recognized.isEmpty()) {
-          "未识别到文字\n请扩大框选范围或提高画面清晰度"
-        } else {
-          "未匹配到题目\n识别文字：$recognized"
-        }
         val preview = ScreenRecordRuntime.lastFrameJpeg
         val bitmap = preview?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+        emptyLabel.text = when {
+          bitmap != null && isMostlyBlack(bitmap) ->
+            "录屏画面被系统屏蔽\n请重新授权“整个屏幕”后再试"
+          recognized.isEmpty() ->
+            "未识别到文字\n请扩大框选范围或提高画面清晰度"
+          else ->
+            "未匹配到题目\n识别文字：$recognized"
+        }
         if (bitmap != null) {
           previewImage.setImageBitmap(bitmap)
           previewImage.visibility = View.VISIBLE

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionManager
+import android.media.projection.MediaProjectionConfig
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -108,7 +109,12 @@ class ScreenRecordPlugin(private val activity: Activity) : Plugin(activity), Ove
   private fun startProjectionConsent(invoke: Invoke) {
     try {
       val mgr = activity.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-      startActivityForResult(invoke, mgr.createScreenCaptureIntent(), "onProjectionResult")
+      val captureIntent = if (Build.VERSION.SDK_INT >= 34) {
+        mgr.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
+      } else {
+        mgr.createScreenCaptureIntent()
+      }
+      startActivityForResult(invoke, captureIntent, "onProjectionResult")
     } catch (e: Exception) {
       invoke.reject("projection_intent_failed: ${e.message}")
     }
