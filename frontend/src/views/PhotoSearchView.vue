@@ -166,6 +166,13 @@ onBeforeUnmount(() => {
       {{ i18n.t('searchPhotoEmpty') }}
     </p>
 
-    <SearchPanel v-if="previewUrl && !busy" v-model:query="query" />
+    <SearchPanel
+      v-if="previewUrl && !busy"
+      :key="previewUrl"
+      v-model:query="query"
+      query-placement="bottom"
+      collapsible-query
+      :show-query-settings="false"
+    />
   </div>
 </template>

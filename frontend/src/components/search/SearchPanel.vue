@@ -13,11 +13,21 @@ import {
   MagnifyingGlassIcon,
   AdjustmentsHorizontalIcon,
   SparklesIcon,
+  ChevronDownIcon,
 } from '@heroicons/vue/24/outline'
 import SearchHitCard from '@/components/search/SearchHitCard.vue'
 import SearchSettingsPanel from '@/components/search/SearchSettingsPanel.vue'
 
 const query = defineModel<string>('query', { default: '' })
+const props = withDefaults(defineProps<{
+  queryPlacement?: 'top' | 'bottom'
+  collapsibleQuery?: boolean
+  showQuerySettings?: boolean
+}>(), {
+  queryPlacement: 'top',
+  collapsibleQuery: false,
+  showQuerySettings: true,
+})
 
 const router = useRouter()
 const i18n = useI18nStore()
@@ -36,6 +46,12 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
 const queryInput = ref<HTMLTextAreaElement | null>(null)
 const QUERY_MAX_HEIGHT = 280
+const queryExpanded = ref(!props.collapsibleQuery)
+
+function toggleQuery() {
+  queryExpanded.value = !queryExpanded.value
+  if (queryExpanded.value) nextTick(autoGrow)
+}
 
 function autoGrow() {
   const el = queryInput.value
@@ -129,10 +145,31 @@ const hasBanks = computed(() => practiceStore.banks.length > 0)
 </script>
 
 <template>
-  <div>
+  <div class="flex flex-col">
     <!-- Search input -->
-    <div class="card-filled p-4 mb-4">
-      <div class="flex items-start gap-2">
+    <div
+      class="card-filled p-4"
+      :class="props.queryPlacement === 'bottom' ? 'order-last mt-4' : 'mb-4'"
+    >
+      <button
+        v-if="props.collapsibleQuery"
+        type="button"
+        class="w-full flex items-center gap-3 text-left"
+        @click="toggleQuery"
+      >
+        <MagnifyingGlassIcon class="w-5 h-5 shrink-0" style="color: rgb(var(--md-on-surface-variant))" />
+        <span class="text-title-md flex-1">OCR 识别内容</span>
+        <span class="text-body-sm" style="color: rgb(var(--md-on-surface-variant))">
+          {{ query.trim().length }} 字
+        </span>
+        <ChevronDownIcon
+          class="w-5 h-5 transition-transform"
+          :class="queryExpanded ? 'rotate-180' : ''"
+          style="color: rgb(var(--md-on-surface-variant))"
+        />
+      </button>
+
+      <div v-show="!props.collapsibleQuery || queryExpanded" class="flex items-start gap-2" :class="props.collapsibleQuery ? 'mt-3' : ''">
         <MagnifyingGlassIcon class="w-5 h-5 mt-2 shrink-0" style="color: rgb(var(--md-on-surface-variant))" />
         <textarea
           ref="queryInput"
@@ -143,6 +180,7 @@ const hasBanks = computed(() => practiceStore.banks.length > 0)
           style="color: rgb(var(--md-on-surface)); overflow-y: auto"
         />
         <button
+          v-if="props.showQuerySettings"
           class="btn-tonal text-sm shrink-0 !px-3 !py-2"
           :style="{ color: showSettings ? 'rgb(var(--md-primary))' : 'rgb(var(--md-on-surface-variant))' }"
           @click="showSettings = !showSettings"
@@ -154,7 +192,7 @@ const hasBanks = computed(() => practiceStore.banks.length > 0)
       </div>
 
       <!-- Settings panel -->
-      <div v-if="showSettings" class="mt-4 pt-4" style="border-top: 1px solid rgb(var(--md-outline-variant) / 0.4)">
+      <div v-if="props.showQuerySettings && showSettings" class="mt-4 pt-4" style="border-top: 1px solid rgb(var(--md-outline-variant) / 0.4)">
         <SearchSettingsPanel />
       </div>
     </div>
