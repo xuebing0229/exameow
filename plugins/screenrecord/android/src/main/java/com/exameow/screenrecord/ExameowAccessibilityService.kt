@@ -4,8 +4,6 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityService.ScreenshotResult
 import android.accessibilityservice.AccessibilityService.TakeScreenshotCallback
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
 import android.graphics.Rect
 import android.os.Build
 import android.os.Handler
@@ -116,9 +114,9 @@ class ExameowAccessibilityService : AccessibilityService() {
     val buffer = screenshot.hardwareBuffer
     val source = try {
       Bitmap.wrapHardwareBuffer(buffer, screenshot.colorSpace)
-    } catch (e: Exception) {
+    } catch (t: Throwable) {
       buffer.close()
-      throw e
+      throw t
     }
 
     if (source == null) {
@@ -126,41 +124,51 @@ class ExameowAccessibilityService : AccessibilityService() {
       throw IllegalStateException("Bitmap.wrapHardwareBuffer returned null")
     }
 
-    try {
+    val softwareCrop = try {
       val region = ScreenRecordRuntime.overlay?.frameRect()
-      val src = if (region != null) {
-        val left = region.left.coerceIn(0, source.width - 1)
-        val top = region.top.coerceIn(0, source.height - 1)
-        val width = region.width().coerceIn(1, source.width - left)
-        val height = region.height().coerceIn(1, source.height - top)
-        Rect(left, top, left + width, top + height)
-      } else {
-        Rect(0, 0, source.width, source.height)
-      }
+      val left = region?.left?.coerceIn(0, source.width - 1) ?: 0
+      val top = region?.top?.coerceIn(0, source.height - 1) ?: 0
+      val width = region?.width()?.coerceIn(1, source.width - left) ?: source.width
+      val height = region?.height()?.coerceIn(1, source.height - top) ?: source.height
 
-      val longestSide = maxOf(src.width(), src.height())
+      // Crop while the screenshot is still hardware-backed, then copy only
+      // that selected region into software memory. This avoids the old
+      // full-screen ARGB copy that caused large transient memory spikes.
+      val hardwareCrop = if (left == 0 && top == 0 && width == source.width && height == source.height) {
+        source
+      } else {
+        Bitmap.createBitmap(source, left, top, width, height)
+      }
+      try {
+        hardwareCrop.copy(Bitmap.Config.ARGB_8888, false)
+          ?: throw IllegalStateException("Failed to copy cropped screenshot")
+      } finally {
+        if (hardwareCrop !== source) hardwareCrop.recycle()
+      }
+    } finally {
+      source.recycle()
+      buffer.close()
+    }
+
+    try {
+      val longestSide = maxOf(softwareCrop.width, softwareCrop.height)
       val scale = when {
         longestSide > MAX_OCR_SIDE -> MAX_OCR_SIDE.toFloat() / longestSide
         longestSide < 640 -> minOf(2f, 640f / longestSide)
         else -> 1f
       }
-      val targetWidth = (src.width() * scale).toInt().coerceAtLeast(1)
-      val targetHeight = (src.height() * scale).toInt().coerceAtLeast(1)
-
-      // Draw the selected hardware-buffer region directly into the final OCR
-      // bitmap. This avoids allocating a full-screen ARGB software copy plus
-      // separate crop/scale bitmaps on every floating-search tap.
-      val finalBitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-      try {
-        val canvas = Canvas(finalBitmap)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-        canvas.drawBitmap(
-          source,
-          src,
-          Rect(0, 0, targetWidth, targetHeight),
-          paint,
+      val finalBitmap = if (scale != 1f) {
+        Bitmap.createScaledBitmap(
+          softwareCrop,
+          (softwareCrop.width * scale).toInt().coerceAtLeast(1),
+          (softwareCrop.height * scale).toInt().coerceAtLeast(1),
+          true,
         )
+      } else {
+        softwareCrop
+      }
 
+      try {
         val output = ByteArrayOutputStream()
         finalBitmap.compress(Bitmap.CompressFormat.JPEG, 92, output)
         val jpeg = output.toByteArray()
@@ -169,11 +177,10 @@ class ExameowAccessibilityService : AccessibilityService() {
           put("data", Base64.encodeToString(jpeg, Base64.NO_WRAP))
         }
       } finally {
-        finalBitmap.recycle()
+        if (finalBitmap !== softwareCrop) finalBitmap.recycle()
       }
     } finally {
-      source.recycle()
-      buffer.close()
+      softwareCrop.recycle()
     }
   }
 }
