@@ -80,16 +80,29 @@ async function processFrameBitmap(bitmap: ImageBitmap) {
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
 
-  // 画布为空（webview 被遮挡时 drawImage 可能得到全零像素）则跳过本帧
-  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data
-  let sum = 0
-  for (let i = 0; i < pixels.length; i += 4096 * 4) {
-    sum += pixels[i]! + pixels[i + 1]! + pixels[i + 2]!
-  }
-  if (sum === 0) {
-    log('画布全零（窗口可能被遮挡），丢弃本帧')
-    store.setResult(null, '')
-    return
+  // 画布为空（webview 被遮挡时 drawImage 可能得到全零像素）则跳过本帧。
+  // 只读取 32x32 的缩略采样，避免 getImageData 为整张 OCR 画布再分配一份 RGBA 内存。
+  const sampleSize = 32
+  const sample = document.createElement('canvas')
+  sample.width = Math.min(sampleSize, canvas.width)
+  sample.height = Math.min(sampleSize, canvas.height)
+  const sampleCtx = sample.getContext('2d', { willReadFrequently: true })
+  if (sampleCtx) {
+    sampleCtx.drawImage(
+      canvas,
+      0, 0, canvas.width, canvas.height,
+      0, 0, sample.width, sample.height,
+    )
+    const pixels = sampleCtx.getImageData(0, 0, sample.width, sample.height).data
+    let sum = 0
+    for (let i = 0; i < pixels.length; i += 4) {
+      sum += pixels[i]! + pixels[i + 1]! + pixels[i + 2]!
+    }
+    if (sum === 0) {
+      log('画布全零（窗口可能被遮挡），丢弃本帧')
+      store.setResult(null, '')
+      return
+    }
   }
 
   const t1 = performance.now()
@@ -210,16 +223,14 @@ export function useScreenRecord() {
   // ===== Android (mobile) side: native plugin drives capture; the webview
   // receives cropped JPEG frames over a Channel and pushes results back =====
 
-  async function processFrameMobile(dataUrl: string) {
+  async function processFrameMobile(base64: string) {
     try {
-      log(`移动端帧到达 len=${dataUrl.length}`)
-      const img = new Image()
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve()
-        img.onerror = () => reject(new Error('Failed to load frame'))
-        img.src = dataUrl
-      })
-      const bitmap = await createImageBitmap(img)
+      log(`移动端帧到达 len=${base64.length}`)
+      if (!base64) throw new Error('Empty frame')
+      const binary = atob(base64)
+      const bytes = new Uint8Array(binary.length)
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+      const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/jpeg' }))
       log(`位图就绪 ${bitmap.width}x${bitmap.height}`)
       await enqueueFrame(bitmap)
     } catch (e) {
@@ -266,7 +277,7 @@ export function useScreenRecord() {
           if (store.mode !== 'floating') void pushAnswerToOverlay()
           break
         case 'frame':
-          void processFrameMobile(`data:image/jpeg;base64,${String(msg.data ?? '')}`)
+          void processFrameMobile(String(msg.data ?? ''))
           break
         case 'adjust':
           store.pauseToAdjust()
