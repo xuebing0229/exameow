@@ -230,7 +230,7 @@ export function useScreenRecord() {
       const binary = atob(base64)
       const bytes = new Uint8Array(binary.length)
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-      const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/jpeg' }))
+      const bitmap = await createImageBitmap(new Blob([bytes as BlobPart], { type: 'image/jpeg' }))
       log(`位图就绪 ${bitmap.width}x${bitmap.height}`)
       await enqueueFrame(bitmap)
     } catch (e) {
