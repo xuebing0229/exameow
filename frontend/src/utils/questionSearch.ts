@@ -73,8 +73,9 @@ export function similarity(query: string, target: string): number {
 
 export function isExactMatch(query: string, target: string): boolean {
   if (!query || !target) return false
-  if (query === target) return true
-  if (query.length >= EXACT_CONTAIN_MIN_LEN && target.includes(query)) return true
+  // Any literal substring match is exact, including a single-character query.
+  if (target.includes(query)) return true
+  // Keep the legacy reverse-containment rule for longer OCR/search text.
   if (target.length >= EXACT_CONTAIN_MIN_LEN && query.includes(target)) return true
   return false
 }
@@ -229,10 +230,13 @@ export function searchQuestions(
 
       // A crop often contains only the stem. Scoring solely against stem + all
       // options unfairly dilutes a correct stem match, so keep the stronger view.
-      const score = Math.max(
+      let score = Math.max(
         coverageScore(doc.stemTermFreq, qTerms),
         coverageScore(doc.termFreq, qTerms),
       )
+      if (tier === 'exact') score = 1
+
+      if (tier === 'exact') score = 1
 
       if (tier === 'exact' || score >= minScore) {
         hits.push({ question: doc.question, bankId: doc.bankId, bankName: doc.bankName, score, tier })
