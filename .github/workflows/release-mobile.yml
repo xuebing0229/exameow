@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'v1.8.2'
 
 env:
   APP_NAME: Exameow
@@ -133,7 +135,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Exameow ${{ github.ref_name }}
           prerelease: false
-          draft: true
+          draft: false
           body: |
             ## 🔗 Quick Links
             - [Docker Image](https://hub.docker.com/r/ailm32442/exameow)
