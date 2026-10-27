@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'v*'
 
 env:
   APP_NAME: Exameow
@@ -118,9 +120,9 @@ jobs:
         with:
           images: ailm32442/exameow
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            latest
+            type=raw,value=1.8.0
+            type=raw,value=1.8
+            type=raw,value=latest
 
       - name: Create and push manifest
         run: |
