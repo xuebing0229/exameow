@@ -297,6 +297,7 @@ export interface LocaleMessages {
   searchAllBanks: string
   searchMatchScope: string
   searchMatchStem: string
+  searchMatchOptions: string
   searchMatchStemOptions: string
   searchTypeFilter: string
   searchResultCount: string
@@ -761,6 +762,7 @@ export const zh: LocaleMessages = {
   searchAllBanks: '全部题库',
   searchMatchScope: '匹配范围',
   searchMatchStem: '仅题干',
+  searchMatchOptions: '仅选项',
   searchMatchStemOptions: '题干+选项',
   searchTypeFilter: '题型筛选',
   searchResultCount: '找到 {count} 道相关题目',
@@ -1225,6 +1227,7 @@ export const zhTW: LocaleMessages = {
   searchAllBanks: '全部題庫',
   searchMatchScope: '匹配范围',
   searchMatchStem: '仅题干',
+  searchMatchOptions: '仅选项',
   searchMatchStemOptions: '题干+选项',
   searchTypeFilter: '题型筛选',
   searchResultCount: '找到 {count} 道相关題目',
@@ -1689,6 +1692,7 @@ export const en: LocaleMessages = {
   searchAllBanks: 'All banks',
   searchMatchScope: 'Match scope',
   searchMatchStem: 'Stem only',
+  searchMatchOptions: 'Options only',
   searchMatchStemOptions: 'Stem + options',
   searchTypeFilter: 'Question types',
   searchResultCount: 'Found {count} related questions',
@@ -2143,6 +2147,7 @@ export const ja: LocaleMessages = {
   searchAllBanks: 'すべての問題集',
   searchMatchScope: '一致モード',
   searchMatchStem: '問題文のみ',
+  searchMatchOptions: '選択肢のみ',
   searchMatchStemOptions: '問題文＋選択肢',
   searchTypeFilter: '形式フィルター',
   searchResultCount: '{n} 件ヒット',
@@ -2594,6 +2599,7 @@ export const ko: LocaleMessages = {
   searchAllBanks: 'All banks',
   searchMatchScope: 'Match scope',
   searchMatchStem: 'Stem only',
+  searchMatchOptions: 'Options only',
   searchMatchStemOptions: 'Stem + options',
   searchTypeFilter: 'Question types',
   searchResultCount: 'Found {count} related questions',
@@ -3045,6 +3051,7 @@ export const es: LocaleMessages = {
   searchAllBanks: 'All banks',
   searchMatchScope: 'Match scope',
   searchMatchStem: 'Stem only',
+  searchMatchOptions: 'Options only',
   searchMatchStemOptions: 'Stem + options',
   searchTypeFilter: 'Question types',
   searchResultCount: 'Found {count} related questions',
@@ -3496,6 +3503,7 @@ export const fr: LocaleMessages = {
   searchAllBanks: 'All banks',
   searchMatchScope: 'Match scope',
   searchMatchStem: 'Stem only',
+  searchMatchOptions: 'Options only',
   searchMatchStemOptions: 'Stem + options',
   searchTypeFilter: 'Question types',
   searchResultCount: 'Found {count} related questions',
@@ -3947,6 +3955,7 @@ export const de: LocaleMessages = {
   searchAllBanks: 'All banks',
   searchMatchScope: 'Match scope',
   searchMatchStem: 'Stem only',
+  searchMatchOptions: 'Options only',
   searchMatchStemOptions: 'Stem + options',
   searchTypeFilter: 'Question types',
   searchResultCount: 'Found {count} related questions',
@@ -4398,6 +4407,7 @@ export const ru: LocaleMessages = {
   searchAllBanks: 'All banks',
   searchMatchScope: 'Match scope',
   searchMatchStem: 'Stem only',
+  searchMatchOptions: 'Options only',
   searchMatchStemOptions: 'Stem + options',
   searchTypeFilter: 'Question types',
   searchResultCount: 'Found {count} related questions',
@@ -4849,6 +4859,7 @@ export const ar: LocaleMessages = {
   searchAllBanks: 'All banks',
   searchMatchScope: 'Match scope',
   searchMatchStem: 'Stem only',
+  searchMatchOptions: 'Options only',
   searchMatchStemOptions: 'Stem + options',
   searchTypeFilter: 'Question types',
   searchResultCount: 'Found {count} related questions',
