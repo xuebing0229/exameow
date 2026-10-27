@@ -18,30 +18,31 @@ function loadSettings(): SearchSettings {
   return { bankIds: null, scope: 'stem_options', types: null }
 }
 
-let _cached: { bankIds: string[] | null; scope: MatchScope; types: QuestionType[] | null } | null = null
+const stored = loadSettings()
+const selectedBankIds = ref<string[] | null>(stored.bankIds)
+const scope = ref<MatchScope>(
+  stored.scope === 'stem' || stored.scope === 'options' ? stored.scope : 'stem_options',
+)
+const selectedTypes = ref<QuestionType[] | null>(stored.types)
+
+watch(
+  [selectedBankIds, scope, selectedTypes],
+  () => {
+    const v = { bankIds: selectedBankIds.value, scope: scope.value, types: selectedTypes.value }
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(v)) } catch {}
+  },
+  { deep: true },
+)
 
 export function getSearchSettings(): SearchSettings {
-  if (!_cached) _cached = loadSettings()
-  return { ..._cached }
+  return {
+    bankIds: selectedBankIds.value,
+    scope: scope.value,
+    types: selectedTypes.value,
+  }
 }
 
 export function useSearchSettings() {
-  const stored = loadSettings()
-
-  const selectedBankIds = ref<string[] | null>(stored.bankIds)
-  const scope = ref<MatchScope>(stored.scope === 'stem' || stored.scope === 'options' ? stored.scope : 'stem_options')
-  const selectedTypes = ref<QuestionType[] | null>(stored.types)
-
-  watch(
-    [selectedBankIds, scope, selectedTypes],
-    () => {
-      const v = { bankIds: selectedBankIds.value, scope: scope.value, types: selectedTypes.value }
-      try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(v)) } catch {}
-      _cached = v
-    },
-    { deep: true },
-  )
-
   function toggleBank(id: string) {
     if (selectedBankIds.value === null) {
       selectedBankIds.value = [id]
