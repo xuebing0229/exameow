@@ -35,6 +35,7 @@ const bankValue = computed<string[]>({
 const scopeOptions = computed(() => [
   { value: 'stem_options', label: i18n.t('searchMatchStemOptions') },
   { value: 'stem', label: i18n.t('searchMatchStem') },
+  { value: 'options', label: i18n.t('searchMatchOptions') },
 ])
 
 const typeOptions = computed(() =>

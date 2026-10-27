@@ -29,7 +29,7 @@ export function useSearchSettings() {
   const stored = loadSettings()
 
   const selectedBankIds = ref<string[] | null>(stored.bankIds)
-  const scope = ref<MatchScope>(stored.scope === 'stem_options' ? 'stem_options' : 'stem')
+  const scope = ref<MatchScope>(stored.scope === 'stem' || stored.scope === 'options' ? stored.scope : 'stem_options')
   const selectedTypes = ref<QuestionType[] | null>(stored.types)
 
   watch(
