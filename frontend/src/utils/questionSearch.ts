@@ -1,6 +1,6 @@
 import type { Question, QuestionBank, QuestionType } from '@exameow/shared'
 
-export type MatchScope = 'stem' | 'stem_options'
+export type MatchScope = 'stem' | 'stem_options' | 'options'
 export type MatchTier = 'exact' | 'fuzzy'
 
 export interface SearchSettings {
@@ -113,10 +113,10 @@ function buildIndex(banks: QuestionBank[], settings: SearchSettings): CorpusInde
     for (const question of bank.questions) {
       if (settings.types && !settings.types.includes(question.type)) continue
 
-      const stemNorm = normalizeText(question.stem)
-      const optionNorms = settings.scope === 'stem_options'
-        ? question.options.map(normalizeText)
-        : []
+      const stemNorm = settings.scope === 'options' ? '' : normalizeText(question.stem)
+      const optionNorms = settings.scope === 'stem'
+        ? []
+        : question.options.map(normalizeText)
       const docText = stemNorm + optionNorms.join('')
       const stemTermFreq = bigrams(stemNorm)
       const termFreq = bigrams(docText)
